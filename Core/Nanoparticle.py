@@ -6,7 +6,6 @@ from Core.BaseNanoparticle import BaseNanoparticle
 class Nanoparticle(BaseNanoparticle):
     def __init__(self, lattice):
         BaseNanoparticle.__init__(self, lattice)
-        self.fitness = 0
 
     def truncated_octahedron(self, height, symbols, n_atoms_same_symbol):
         bounding_box_anchor = self.lattice.get_anchor_index_of_centered_box(2 * height, 2 * height, 2 * height)
