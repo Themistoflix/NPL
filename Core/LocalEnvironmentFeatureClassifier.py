@@ -1,0 +1,78 @@
+import Core.LocalEnvironmentCalculator
+
+import numpy as np
+from sklearn.cluster import KMeans
+
+
+class LocalEnvironmentFeatureClassifier:
+    def __init__(self, local_environment_calculator):
+        self.local_environment_calculator = local_environment_calculator
+
+    def compute_features_as_index_list(self, particle, recompute_local_environments=False):
+        if recompute_local_environments:
+            self.local_environment_calculator.compute_local_environments(particle)
+
+        n_features = self.compute_n_features(particle)
+
+        features_as_index_lists = list()  # need empty list in case of recalculation
+        for i in range(n_features):
+            l = list()
+            features_as_index_lists.append(l)
+
+        for index in particle.get_indices():
+            feature = self.predict_atom_feature(particle, index)
+            features_as_index_lists[feature].append(index)
+
+        particle.set_features_as_index_lists(features_as_index_lists)
+
+    def compute_feature_vector(self, particle, recompute_local_environments=False):
+        self.compute_features_as_index_list(particle, recompute_local_environments)
+
+        n_features = self.compute_n_features(particle)
+        feature_vector = np.array([len(particle.getFeaturesAsIndexLists()[feature]) for feature in range(n_features)])
+
+        particle.set_feature_vector(feature_vector)
+
+    def compute_n_features(self, particle):
+        raise NotImplementedError
+
+    def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
+        raise NotImplementedError
+
+    def train(self, training_set):
+        raise NotImplementedError
+
+
+class KMeansClassifier(LocalEnvironmentFeatureClassifier):
+    def __init__(self, n_cluster, local_environment_calculator):
+        LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
+        self.kMeans = None
+        self.n_cluster = n_cluster
+
+    def compute_n_features(self, particle):
+        n_elements = len(particle.get_symbols())
+        n_features = self.n_cluster * n_elements
+        return n_features
+
+    def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
+        symbol = particle.get_symbol(lattice_index)
+        symbols = sorted(particle.get_symbols())
+        symbol_index = symbols.index(symbol)
+
+        offset = symbol_index*self.n_cluster
+        if recompute_local_environment:
+            environment = self.kMeans.predict([particle.computeBondParameter(lattice_index)])[0]
+        else:
+            environment = self.kMeans.predict([particle.getBondParameter(lattice_index)])[0]
+        return offset + environment
+
+    def train(self, training_set):
+        local_environments = list()
+        for particle in training_set:
+            local_environments = local_environments + particle.get_local_environments()
+
+        print("Starting kMeans")
+        self.kMeans = KMeans(n_clusters=self.n_cluster, random_state=0).fit(local_environments)
+
+
+
