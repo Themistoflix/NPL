@@ -44,7 +44,7 @@ class SOAPCalculator(LocalEnvironmentCalculator):
 
             neighbors = particle.get_atomic_neighbors(lattice_index)
             symbols = np.array([particle.get_symbol(index) for index in neighbors])
-            cartesian_coordinates = [particle.lattice.getCartesianPositionFromIndex(index) for index in neighbors]
+            cartesian_coordinates = [particle.lattice.get_cartesian_position_from_index(index) for index in neighbors]
 
             center_atom_position = particle.lattice.get_cartesian_position_from_index(lattice_index)
             cartesian_coordinates = list(map(lambda x: x - center_atom_position, cartesian_coordinates))

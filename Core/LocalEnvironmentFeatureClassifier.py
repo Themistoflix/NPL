@@ -1,5 +1,3 @@
-import Core.LocalEnvironmentCalculator
-
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -29,7 +27,7 @@ class LocalEnvironmentFeatureClassifier:
         self.compute_features_as_index_list(particle, recompute_local_environments)
 
         n_features = self.compute_n_features(particle)
-        feature_vector = np.array([len(particle.getFeaturesAsIndexLists()[feature]) for feature in range(n_features)])
+        feature_vector = np.array([len(particle.get_features_as_index_lists()[feature]) for feature in range(n_features)])
 
         particle.set_feature_vector(feature_vector)
 
@@ -61,15 +59,15 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
 
         offset = symbol_index*self.n_cluster
         if recompute_local_environment:
-            environment = self.kMeans.predict([particle.computeBondParameter(lattice_index)])[0]
+            environment = self.kMeans.predict([self.local_environment_calculator.compute_local_environment(particle, lattice_index)])[0]
         else:
-            environment = self.kMeans.predict([particle.getBondParameter(lattice_index)])[0]
+            environment = self.kMeans.predict([particle.get_local_environment(lattice_index)])[0]
         return offset + environment
 
     def train(self, training_set):
         local_environments = list()
         for particle in training_set:
-            local_environments = local_environments + particle.get_local_environments()
+            local_environments = local_environments + list(particle.get_local_environments().values())
 
         print("Starting kMeans")
         self.kMeans = KMeans(n_clusters=self.n_cluster, random_state=0).fit(local_environments)

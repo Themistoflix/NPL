@@ -20,7 +20,7 @@ class BaseNanoparticle:
 
         self.energies = dict()
 
-        self.local_environments = None
+        self.local_environments = dict()
         self.features_as_index_lists = None
         self.feature_vector = None
 
