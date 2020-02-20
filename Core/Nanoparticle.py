@@ -1,6 +1,6 @@
 import numpy as np
 
-from Code.BaseNanoparticle import BaseNanoparticle
+from Core.BaseNanoparticle import BaseNanoparticle
 
 
 class Nanoparticle(BaseNanoparticle):
@@ -8,13 +8,7 @@ class Nanoparticle(BaseNanoparticle):
         BaseNanoparticle.__init__(self, lattice)
         self.fitness = 0
 
-    def set_fitness(self, fitness):
-        self.fitness = fitness
-
-    def get_fitness(self):
-        return self.fitness
-
-    def kozlov_sphere(self, height, symbols, n_atoms_same_symbol):
+    def truncated_octahedron(self, height, symbols, n_atoms_same_symbol):
         bounding_box_anchor = self.lattice.get_anchor_index_of_centered_box(2 * height, 2 * height, 2 * height)
         lower_tip_position = bounding_box_anchor + np.array([height, height, 0])
 

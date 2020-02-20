@@ -44,6 +44,10 @@ class BaseNanoparticle:
         data['lattice'] = lattice_data
         data['energies'] = self.energies
 
+        data['feature_vector'] = self.feature_vector
+        data['features_as_index_lists'] = self.features_as_index_lists
+        data['local_environments'] = self.local_environments
+
         atom_indices = self.atoms.get_indices()
         corresponding_symbols = [self.atoms.get_symbol(index) for index in atom_indices]
 
@@ -64,6 +68,10 @@ class BaseNanoparticle:
         self.energies = dictionary['energies']
         self.atoms.add_atoms(zip(dictionary['atoms']['indices'], dictionary['atoms']['symbols']))
         self.neighbor_list.construct(dictionary['atoms']['indices'])
+
+        self.feature_vector = dictionary['feature_vector']
+        self.features_as_index_lists = dictionary['features_as_index_lists']
+        self.local_environments = dictionary['local_environments']
 
     def load(self, filename):
         with open(filename, 'r') as file:
