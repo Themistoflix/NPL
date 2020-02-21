@@ -3,6 +3,7 @@ from asap3 import EMT
 
 import numpy as np
 import sklearn.gaussian_process as gp
+from sklearn.linear_model import BayesianRidge
 
 
 class EnergyCalculator:
@@ -24,7 +25,7 @@ class EMTCalculator(EnergyCalculator):
         self.steps = steps
         self.energy_key = 'EMT'
 
-    def compute_energy(self, particle):
+    def compute_energy(self, particle, feature_key=None):
         cell_width = particle.lattice.width * particle.lattice.lattice_constant
         cell_length = particle.lattice.length * particle.lattice.lattice_constant
         cell_height = particle.lattice.height * particle.lattice.lattice_constant
@@ -40,7 +41,7 @@ class EMTCalculator(EnergyCalculator):
 
 
 class GPRCalculator(EnergyCalculator):
-    def __init__(self, kernel=None, alpha=0.01, normalize_y=True):
+    def __init__(self, feature_key, kernel=None, alpha=0.01, normalize_y=True):
         EnergyCalculator.__init__(self)
         if kernel is None:
             self.kernel = gp.kernels.ConstantKernel(1., (1e-1, 1e3)) * gp.kernels.RBF(1., (1e-3, 1e3))
@@ -51,16 +52,17 @@ class GPRCalculator(EnergyCalculator):
         self.normalize_y = normalize_y
         self.GPR = None
         self.energy_key = 'GPR'
+        self.feature_key = feature_key
 
-    def train(self, training_set, training_energy_key):
-        feature_vectors = [p.get_feature_vector() for p in training_set]
-        energies = [p.get_energy(training_energy_key) for p in training_set]
+    def train(self, training_set, energy_key):
+        feature_vectors = [p.get_feature_vector(self.feature_key) for p in training_set]
+        energies = [p.get_energy(energy_key) for p in training_set]
 
         self.GPR = gp.GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=20, alpha=self.alpha, normalize_y=self.normalize_y)
         self.GPR.fit(feature_vectors, energies)
 
     def compute_energy(self, particle):
-        energy = self.GPR.predict([particle.get_feature_vector()])[0]
+        energy = self.GPR.predict([particle.get_feature_vector(self.feature_key)])[0]
         particle.set_energy(self.energy_key, energy)
 
 
@@ -92,3 +94,25 @@ class MixingEnergyCalculator(EnergyCalculator):
             mixing_energy -= self.mixing_parameters[symbol] * particle.get_stoichiometry()[symbol] / n_atoms
 
         particle.set_energy(self.energy_key, mixing_energy)
+
+
+class BayesianRRCalculator(EnergyCalculator):
+    def __init__(self, feature_key):
+        EnergyCalculator.__init__(self)
+
+        self.ridge = BayesianRidge(fit_intercept=False)
+        self.energy_key = 'BRR'
+        self.feature_key = feature_key
+
+    def train(self, training_set, energy_key):
+        feature_vectors = [p.get_feature_vector(self.feature_key) for p in training_set]
+        energies = [p.get_energy(energy_key) for p in training_set]
+
+        self.ridge.fit(feature_vectors, energies)
+
+    def get_BRR_coefficients(self):
+        return self.ridge.coef_
+
+    def compute_energy(self, particle):
+        brr_energy = np.dot(np.transpose(self.ridge.coef_), particle.get_feature_vector(self.feature_key))
+        particle.set_energy(self.energy_key, brr_energy)

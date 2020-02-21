@@ -5,6 +5,7 @@ from sklearn.cluster import KMeans
 class LocalEnvironmentFeatureClassifier:
     def __init__(self, local_environment_calculator):
         self.local_environment_calculator = local_environment_calculator
+        self.feature_key = None
 
     def compute_features_as_index_list(self, particle, recompute_local_environments=False):
         if recompute_local_environments:
@@ -21,15 +22,15 @@ class LocalEnvironmentFeatureClassifier:
             feature = self.predict_atom_feature(particle, index)
             features_as_index_lists[feature].append(index)
 
-        particle.set_features_as_index_lists(features_as_index_lists)
+        particle.set_features_as_index_lists(self.feature_key, features_as_index_lists)
 
     def compute_feature_vector(self, particle, recompute_local_environments=False):
         self.compute_features_as_index_list(particle, recompute_local_environments)
 
         n_features = self.compute_n_features(particle)
-        feature_vector = np.array([len(particle.get_features_as_index_lists()[feature]) for feature in range(n_features)])
+        feature_vector = np.array([len(particle.get_features_as_index_lists(self.feature_key)[feature]) for feature in range(n_features)])
 
-        particle.set_feature_vector(feature_vector)
+        particle.set_feature_vector(self.feature_key, feature_vector)
 
     def compute_n_features(self, particle):
         raise NotImplementedError
@@ -42,10 +43,11 @@ class LocalEnvironmentFeatureClassifier:
 
 
 class KMeansClassifier(LocalEnvironmentFeatureClassifier):
-    def __init__(self, n_cluster, local_environment_calculator):
+    def __init__(self, n_cluster, local_environment_calculator, feature_key):
         LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
         self.kMeans = None
         self.n_cluster = n_cluster
+        self.feature_key = feature_key
 
     def compute_n_features(self, particle):
         n_elements = len(particle.get_symbols())

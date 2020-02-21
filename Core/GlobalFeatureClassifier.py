@@ -3,7 +3,10 @@ import numpy as np
 
 class GlobalFeatureClassifier:
     def __init__(self):
-        pass
+        self.feature_key = None
+
+    def get_feature_key(self):
+        return self.feature_key
 
     def compute_feature_vector(self, particle):
         raise NotImplementedError
@@ -14,6 +17,8 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
         GlobalFeatureClassifier.__init__(self)
         self.symbol_a = symbol_a
         self.symbol_b = symbol_b
+
+        self.feature_key = 'SFC'
         return
 
     def compute_feature_vector(self, particle):
@@ -21,7 +26,7 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
         n_atoms = particle.atoms.get_n_atoms()
 
         M = particle.get_stoichiometry()[self.symbol_a] * 0.1
-        particle.set_feature_vector(np.array([n_aa_bonds / n_atoms, n_bb_bonds / n_atoms, n_ab_bonds / n_atoms, M]))
+        particle.set_feature_vector(self.feature_key, np.array([n_aa_bonds / n_atoms, n_bb_bonds / n_atoms, n_ab_bonds / n_atoms, M]))
 
     def compute_respective_bond_counts(self, particle):
         n_aa_bonds = 0

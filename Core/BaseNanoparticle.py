@@ -21,8 +21,8 @@ class BaseNanoparticle:
         self.energies = dict()
 
         self.local_environments = dict()
-        self.features_as_index_lists = None
-        self.feature_vector = None
+        self.features_as_index_lists = dict()
+        self.feature_vector = dict()
 
     def from_particle_data(self, atoms, neighbor_list=None):
         self.atoms = atoms
@@ -300,17 +300,17 @@ class BaseNanoparticle:
     def get_energy(self, key):
         return self.energies[key]
 
-    def set_feature_vector(self, feature_vector):
-        self.feature_vector = feature_vector
+    def set_feature_vector(self, key, feature_vector):
+        self.feature_vector[key] = feature_vector
 
-    def get_feature_vector(self):
-        return self.feature_vector
+    def get_feature_vector(self, key):
+        return self.feature_vector[key]
 
-    def set_features_as_index_lists(self, features_as_index_lists):
-        self.features_as_index_lists = features_as_index_lists
+    def set_features_as_index_lists(self, key, features_as_index_lists):
+        self.features_as_index_lists[key] = features_as_index_lists
 
-    def get_features_as_index_lists(self):
-        return self.features_as_index_lists
+    def get_features_as_index_lists(self, key):
+        return self.features_as_index_lists[key]
 
     def set_local_environment(self, lattice_index, local_environment):
         self.local_environments[lattice_index] = local_environment
