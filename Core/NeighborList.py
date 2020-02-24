@@ -20,16 +20,18 @@ class NeighborList:
             self.list[lattice_index] = nearest_neighbors
 
     def add_atoms(self, lattice_indices):
-        all_atoms = list(self.list.keys())
-        for latticeIndex in lattice_indices:
+        all_atoms = list(self.list.keys()) + lattice_indices
+
+        for lattice_index in lattice_indices:
             nearest_neighbors = set()
-            nearest_lattice_neighbors = self.lattice.get_nearest_neighbors(latticeIndex)
+            nearest_lattice_neighbors = self.lattice.get_nearest_neighbors(lattice_index)
             for neighbor in nearest_lattice_neighbors:
                 if neighbor in all_atoms:
                     nearest_neighbors.add(neighbor)
-                    self.list[neighbor].add(latticeIndex)
+                    if neighbor in self.list:
+                        self.list[neighbor].add(lattice_index)
 
-            self.list[latticeIndex] = nearest_neighbors
+            self.list[lattice_index] = nearest_neighbors
 
     def remove_atoms(self, lattice_indices):
         for lattice_index in lattice_indices:

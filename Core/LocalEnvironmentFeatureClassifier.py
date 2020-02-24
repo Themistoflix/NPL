@@ -38,9 +38,6 @@ class LocalEnvironmentFeatureClassifier:
     def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
         raise NotImplementedError
 
-    def train(self, training_set):
-        raise NotImplementedError
-
 
 class KMeansClassifier(LocalEnvironmentFeatureClassifier):
     def __init__(self, n_cluster, local_environment_calculator, feature_key):
@@ -66,7 +63,7 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
             environment = self.kMeans.predict([particle.get_local_environment(lattice_index)])[0]
         return offset + environment
 
-    def train(self, training_set):
+    def kmeans_clustering(self, training_set):
         local_environments = list()
         for particle in training_set:
             local_environments = local_environments + list(particle.get_local_environments().values())

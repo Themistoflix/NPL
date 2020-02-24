@@ -22,7 +22,7 @@ class BaseNanoparticle:
 
         self.local_environments = dict()
         self.features_as_index_lists = dict()
-        self.feature_vector = dict()
+        self.feature_vectors = dict()
 
     def from_particle_data(self, atoms, neighbor_list=None):
         self.atoms = atoms
@@ -33,7 +33,7 @@ class BaseNanoparticle:
 
         self.construct_bounding_box()
 
-    def get_dictionary_description(self):
+    def get_as_dictionary(self):
         data = dict()
         lattice_data = dict()
         lattice_data['width'] = self.lattice.width
@@ -44,7 +44,7 @@ class BaseNanoparticle:
         data['lattice'] = lattice_data
         data['energies'] = self.energies
 
-        data['feature_vector'] = self.feature_vector
+        data['feature_vectors'] = self.feature_vectors
         data['features_as_index_lists'] = self.features_as_index_lists
         data['local_environments'] = self.local_environments
 
@@ -52,24 +52,25 @@ class BaseNanoparticle:
         corresponding_symbols = [self.atoms.get_symbol(index) for index in atom_indices]
 
         data['atoms'] = {'indices': atom_indices, 'symbols': corresponding_symbols}
+        data['neighbor_list'] = self.neighbor_list.list
 
         return data
 
     def save(self, filename):
-        data = self.get_dictionary_description()
+        data = self.get_as_dictionary()
         with open(filename + '.pcl', 'w') as file:
             json.dump(data, file)
 
-    def build_from_dictionary_description(self, dictionary):
+    def build_from_dictionary(self, dictionary):
         lattice_data = dictionary['lattice']
         self.lattice = FCCLattice(lattice_data['width'], lattice_data['length'], lattice_data['height'], lattice_data['lattice_constant'])
         self.neighbor_list = NeighborList(self.lattice)
+        self.neighbor_list.list = dictionary['neighbor_list']
 
         self.energies = dictionary['energies']
-        self.atoms.add_atoms(zip(dictionary['atoms']['indices'], dictionary['atoms']['symbols']))
-        self.neighbor_list.construct(dictionary['atoms']['indices'])
+        self.add_atoms(list(zip(dictionary['atoms']['indices'], dictionary['atoms']['symbols'])))
 
-        self.feature_vector = dictionary['feature_vector']
+        self.feature_vectors = dictionary['feature_vectors']
         self.features_as_index_lists = dictionary['features_as_index_lists']
         self.local_environments = dictionary['local_environments']
 
@@ -77,16 +78,16 @@ class BaseNanoparticle:
         with open(filename, 'r') as file:
             file_string = file.read()
             dictionary = json.loads(file_string)
-        self.build_from_dictionary_description(dictionary)
+        self.build_from_dictionary(dictionary)
 
     def add_atoms(self, atoms):
         self.atoms.add_atoms(atoms)
         indices, _ = zip(*atoms)
-        self.neighbor_list.add_atoms(indices)
+        self.neighbor_list.add_atoms(list(indices))
 
-    def remove_atoms(self, latticeIndices):
-        self.atoms.remove_atoms(latticeIndices)
-        self.neighbor_list.remove_atoms(latticeIndices)
+    def remove_atoms(self, lattice_indices):
+        self.atoms.remove_atoms(lattice_indices)
+        self.neighbor_list.remove_atoms(lattice_indices)
 
     def transform_atoms(self, new_atoms):
         self.atoms.transform_atoms(new_atoms)
@@ -301,10 +302,10 @@ class BaseNanoparticle:
         return self.energies[key]
 
     def set_feature_vector(self, key, feature_vector):
-        self.feature_vector[key] = feature_vector
+        self.feature_vectors[key] = feature_vector
 
     def get_feature_vector(self, key):
-        return self.feature_vector[key]
+        return self.feature_vectors[key]
 
     def set_features_as_index_lists(self, key, features_as_index_lists):
         self.features_as_index_lists[key] = features_as_index_lists
