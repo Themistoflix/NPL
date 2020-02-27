@@ -62,28 +62,29 @@ class SOAPCalculator(LocalEnvironmentCalculator):
                     for m in range(-l, l + 1):
                         c_lm = 0.0
                         for i, point in enumerate(angular_coordinates):
-                            if symbol_density[i] != 0:
-                                c_lm += symbol_density[i] * np.conj(sph_harm(m, l, point[0], point[1]))
+                            c_lm += symbol_density[i] * np.conj(sph_harm(m, l, point[0], point[1]))
                         c_lms_symbol.append(c_lm)
                 expansion_coefficients.append(c_lms_symbol)
             return expansion_coefficients
 
         sh_expansion_coefficients = spherical_harmonics_expansion()
         bond_parameters = []
-        for symbol_index, symbol in enumerate(sorted(particle.get_symbols())):
-            n_neighbors_with_symbol = len(
-                list(filter(lambda x: particle.get_symbol(x) == symbol, particle.get_atomic_neighbors(lattice_index))))
-            q_ls_symbol = []
-            i = 0
-            for l in range(self.l_max + 1):
-                q_l = 0
-                if n_neighbors_with_symbol != 0:
+        for symbol_index_1, symbol_1 in enumerate(sorted(particle.get_symbols())):
+            for symbol_index_2, symbol_2 in enumerate(sorted(particle.get_symbols())):
+                n_neighbors_with_symbol_1 = len(
+                    list(filter(lambda x: particle.get_symbol(x) == symbol_1, particle.get_atomic_neighbors(lattice_index))))
+                n_neighbors_with_symbol_2 = len(
+                    list(filter(lambda x: particle.get_symbol(x) == symbol_2,
+                                particle.get_atomic_neighbors(lattice_index))))
+                q_ls_symbol = []
+                i = 0
+                for l in range(self.l_max + 1):
+                    q_l = 0
                     for m in range(-l, l + 1):
-                        q_l += 1.0 / (n_neighbors_with_symbol ** 2) * np.conj(sh_expansion_coefficients[symbol_index][i]) * \
-                              sh_expansion_coefficients[symbol_index][i]
+                        q_l += 1.0 / (n_neighbors_with_symbol_1 * n_neighbors_with_symbol_2) * np.conj(sh_expansion_coefficients[symbol_index_1][i]) * sh_expansion_coefficients[symbol_index_2][i]
                         i += 1
-                q_ls_symbol.append(np.sqrt((np.sqrt(4.0 * np.pi) / (2. * l + 1.)) * q_l))
-            bond_parameters.append(q_ls_symbol)
+                    q_ls_symbol.append(np.sqrt((np.sqrt(4.0 * np.pi) / (2. * l + 1.)) * q_l))
+                bond_parameters.append(q_ls_symbol)
 
         bond_parameters = np.array(bond_parameters)
         bond_parameters = bond_parameters.real

@@ -54,7 +54,7 @@ class GPRCalculator(EnergyCalculator):
         self.energy_key = 'GPR'
         self.feature_key = feature_key
 
-    def train(self, training_set, energy_key):
+    def fit(self, training_set, energy_key):
         feature_vectors = [p.get_feature_vector(self.feature_key) for p in training_set]
         energies = [p.get_energy(energy_key) for p in training_set]
 
@@ -104,7 +104,7 @@ class BayesianRRCalculator(EnergyCalculator):
         self.energy_key = 'BRR'
         self.feature_key = feature_key
 
-    def train(self, training_set, energy_key):
+    def fit(self, training_set, energy_key):
         feature_vectors = [p.get_feature_vector(self.feature_key) for p in training_set]
         energies = [p.get_energy(energy_key) for p in training_set]
 
