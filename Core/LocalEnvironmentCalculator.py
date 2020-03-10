@@ -71,11 +71,11 @@ class SOAPCalculator(LocalEnvironmentCalculator):
         bond_parameters = []
         for symbol_index_1, symbol_1 in enumerate(sorted(particle.get_symbols())):
             for symbol_index_2, symbol_2 in enumerate(sorted(particle.get_symbols())):
-                n_neighbors_with_symbol_1 = len(
-                    list(filter(lambda x: particle.get_symbol(x) == symbol_1, particle.get_atomic_neighbors(lattice_index))))
-                n_neighbors_with_symbol_2 = len(
+                n_neighbors_with_symbol_1 = max(1, len(
+                    list(filter(lambda x: particle.get_symbol(x) == symbol_1, particle.get_atomic_neighbors(lattice_index)))))
+                n_neighbors_with_symbol_2 = max(1, len(
                     list(filter(lambda x: particle.get_symbol(x) == symbol_2,
-                                particle.get_atomic_neighbors(lattice_index))))
+                                particle.get_atomic_neighbors(lattice_index)))))
                 q_ls_symbol = []
                 i = 0
                 for l in range(self.l_max + 1):
@@ -92,3 +92,33 @@ class SOAPCalculator(LocalEnvironmentCalculator):
         bond_parameters = np.reshape(bond_parameters, bond_parameters.size)
 
         return bond_parameters
+
+
+class BondCountingEnvironmentCalculator(LocalEnvironmentCalculator):
+    def __init__(self, symbol_a, symbol_b):
+        LocalEnvironmentCalculator.__init__(self)
+        self.symbol_a = symbol_a
+        self.symbol_b = symbol_b
+
+    def compute_local_environment(self, particle, lattice_index):
+        n_aa_bonds = 0
+        n_bb_bonds = 0
+        n_ab_bonds = 0
+
+        neighbor_list = particle.neighbor_list
+        center_atom_symbol = particle.get_symbol(lattice_index)
+
+        neighbors = neighbor_list[lattice_index]
+        for neighbor in neighbors:
+            if center_atom_symbol == self.symbol_a:
+                if particle.get_symbol(neighbor) == self.symbol_a:
+                    n_aa_bonds += 1
+                else:
+                    n_ab_bonds += 1
+            else:
+                if particle.get_symbol(neighbor) == self.symbol_b:
+                    n_bb_bonds += 1
+                else:
+                    n_ab_bonds += 1
+
+        return np.array([n_aa_bonds, n_ab_bonds, n_bb_bonds])

@@ -154,7 +154,6 @@ class BaseNanoparticle:
 
             # remove atoms till the final number is reached "from the ground up"
 
-            # TODO implement sorting prioritzing the different directions in random order
             def sort_by_position(atom):
                 return self.lattice.get_lattice_position_from_index(atom)[0]
 

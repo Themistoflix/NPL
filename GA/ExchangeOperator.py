@@ -60,8 +60,8 @@ class ExchangeOperator:
         np.random.shuffle(symbol2_indices)
         symbol2_indices.sort(key=lambda x: env_differences[env_feature(atom_features[x])] if env_differences[env_feature(atom_features[x])] < 0 else 0)
 
-        symbol1_index = symbol1_indices[self.index]
-        symbol2_index = symbol2_indices[self.index]
+        symbol1_index = symbol1_indices[self.index % len(symbol1_indices)]
+        symbol2_index = symbol2_indices[self.index % len(symbol2_indices)]
 
         new_particle.atoms.swap_atoms([(symbol1_index, symbol2_index)])
         self.index += 1

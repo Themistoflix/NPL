@@ -32,6 +32,9 @@ class LocalEnvironmentFeatureClassifier:
 
         particle.set_feature_vector(self.feature_key, feature_vector)
 
+    def get_feature_key(self):
+        return self.feature_key
+
     def compute_n_features(self, particle):
         raise NotImplementedError
 
