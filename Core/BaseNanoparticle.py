@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-import json
+import pickle
 
 from ase import Atoms
 
@@ -58,8 +58,7 @@ class BaseNanoparticle:
 
     def save(self, filename):
         data = self.get_as_dictionary()
-        with open(filename + '.pcl', 'w') as file:
-            json.dump(data, file)
+        pickle.dump(data, open(filename, 'wb'))
 
     def build_from_dictionary(self, dictionary):
         lattice_data = dictionary['lattice']
@@ -72,12 +71,11 @@ class BaseNanoparticle:
 
         self.feature_vectors = dictionary['feature_vectors']
         self.features_as_index_lists = dictionary['features_as_index_lists']
+
         self.local_environments = dictionary['local_environments']
 
     def load(self, filename):
-        with open(filename, 'r') as file:
-            file_string = file.read()
-            dictionary = json.loads(file_string)
+        dictionary = pickle.load(open(filename, 'rb'))
         self.build_from_dictionary(dictionary)
 
     def add_atoms(self, atoms):

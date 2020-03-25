@@ -75,4 +75,3 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
         self.kMeans = KMeans(n_clusters=self.n_cluster, random_state=0).fit(local_environments)
 
 
-

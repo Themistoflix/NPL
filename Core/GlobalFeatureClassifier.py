@@ -52,3 +52,24 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
                     n_bb_bonds += 1
 
         return n_aa_bonds, n_bb_bonds, n_ab_bonds
+
+
+class TopologicalFeatureClassifier(SimpleFeatureClassifier):
+    def __init__(self, symbol_a, symbol_b):
+        SimpleFeatureClassifier.__init__(self, symbol_a, symbol_b)
+        self.symbol_a = symbol_a
+        self.symbol_b = symbol_b
+
+        self.feature_key = 'TFC'
+
+    def compute_feature_vector(self, particle):
+        n_atoms = particle.get_n_atoms()
+        n_aa_bonds, n_bb_bonds, n_ab_bonds = self.compute_respective_bond_counts(particle)
+        n_corners_a = len(particle.get_atom_indices_from_coordination_number([6], symbol=self.symbol_a))
+        n_edge = len(particle.get_atom_indices_from_coordination_number([7], symbol=self.symbol_a))
+        n_terrace_a = len(particle.get_atom_indices_from_coordination_number([9], symbol=self.symbol_a))
+
+        M = particle.get_stoichiometry()[self.symbol_a] * 0.1
+
+        feature_vector = np.array([n_aa_bonds/n_atoms, n_bb_bonds/n_atoms, n_ab_bonds/n_atoms, M, n_corners_a, n_edge, n_terrace_a])
+        particle.set_feature_vector(self.feature_key, feature_vector)

@@ -110,7 +110,7 @@ class BayesianRRCalculator(EnergyCalculator):
 
         self.ridge.fit(feature_vectors, energies)
 
-    def get_BRR_coefficients(self):
+    def get_coefficients(self):
         return self.ridge.coef_
 
     def compute_energy(self, particle):

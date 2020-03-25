@@ -94,31 +94,25 @@ class SOAPCalculator(LocalEnvironmentCalculator):
         return bond_parameters
 
 
-class BondCountingEnvironmentCalculator(LocalEnvironmentCalculator):
+class NeighborCountingEnvironmentCalculator(LocalEnvironmentCalculator):
     def __init__(self, symbol_a, symbol_b):
         LocalEnvironmentCalculator.__init__(self)
         self.symbol_a = symbol_a
         self.symbol_b = symbol_b
 
     def compute_local_environment(self, particle, lattice_index):
-        n_aa_bonds = 0
-        n_bb_bonds = 0
-        n_ab_bonds = 0
+        n_a_atoms = 0
+        n_b_atoms = 0
 
         neighbor_list = particle.neighbor_list
-        center_atom_symbol = particle.get_symbol(lattice_index)
-
         neighbors = neighbor_list[lattice_index]
         for neighbor in neighbors:
-            if center_atom_symbol == self.symbol_a:
-                if particle.get_symbol(neighbor) == self.symbol_a:
-                    n_aa_bonds += 1
-                else:
-                    n_ab_bonds += 1
+            if particle.get_symbol(neighbor) == self.symbol_a:
+                n_a_atoms += 1
             else:
-                if particle.get_symbol(neighbor) == self.symbol_b:
-                    n_bb_bonds += 1
-                else:
-                    n_ab_bonds += 1
+                n_b_atoms += 1
 
-        return np.array([n_aa_bonds, n_ab_bonds, n_bb_bonds])
+        return np.array([n_a_atoms, n_b_atoms])
+
+
+
