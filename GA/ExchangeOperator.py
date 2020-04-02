@@ -71,6 +71,75 @@ class ExchangeOperator:
     def reset(self):
         self.index = 0
 
+    def gradient_descent(self, particle, local_energies, feature_key, local_feature_classifier):
+        current_features = particle.get_atom_features(feature_key)
+
+        def compute_neighborhood_energy(index, local_energies):
+            energy = local_energies[current_features[index]]
+            neighbors = particle.neighbor_list[index]
+            for neighbor in neighbors:
+                energy += local_energies[current_features[neighbor]]
+            return energy
+
+        def compute_exchange_energies(symbol_from, symbol_to):
+            indices_with_symbol = copy.deepcopy(new_particle.get_indices_by_symbol(symbol_from))
+            indices_with_symbol.sort()
+            exchange_neighborhood_energies = dict()
+
+            for index in indices_with_symbol:
+                old_neighborhood_energy = compute_neighborhood_energy(index, local_energies)
+                new_particle.atoms.transform_atoms([(index, symbol_to)])
+
+                new_neighborhood_energy = 0
+
+                neighbors = new_particle.neighbor_list[index]
+                for atom_index in neighbors | {index}:
+                    new_feature = local_feature_classifier.predict_atom_feature(new_particle, atom_index, True)
+                    new_neighborhood_energy += local_energies[new_feature]
+
+                exchange_neighborhood_energies[index] = new_neighborhood_energy - old_neighborhood_energy
+                new_particle.atoms.transform_atoms([(index, symbol_from)])
+
+            return exchange_neighborhood_energies
+
+        new_particle = copy.deepcopy(particle)
+        if new_particle.is_pure():
+            print("Pure particle! No permutation possible")
+            return new_particle
+
+        symbols = sorted(new_particle.atoms.get_symbols())
+        symbol_a = symbols[0]
+        symbol_b = symbols[1]
+
+        # exchange energies symbol_a atoms with symbol_b atoms
+        exchange_energies_to_b = compute_exchange_energies(symbol_a, symbol_b)
+        exchange_energies_to_a = compute_exchange_energies(symbol_b, symbol_a)
+
+
+        # sort indices according to maximal energy gain = minimal exchange energy
+        best_indices_a = [index for index, energy in sorted(exchange_energies_to_b.items(), key=lambda x: x[1])]
+        best_indices_b = [index for index, energy in sorted(exchange_energies_to_a.items(), key=lambda x: x[1])]
+
+        print("{0}{1}{2}".format(exchange_energies_to_a[best_indices_b[0]], exchange_energies_to_a[best_indices_b[1]], exchange_energies_to_a[best_indices_b[2]]))
+        print("{0}{1}{2}".format(exchange_energies_to_b[best_indices_a[0]], exchange_energies_to_b[best_indices_a[1]],
+                                 exchange_energies_to_b[best_indices_a[2]]))
+
+        n_atoms_symbol_a = len(best_indices_a)
+        n_atoms_symbol_b = len(best_indices_b)
+
+        #index_atom_a = min(self.draw_from_geometric_distribution(self.p) - 1, n_atoms_symbol_a)
+        #index_atom_b = min(self.draw_from_geometric_distribution(self.p) - 1, n_atoms_symbol_b)
+
+        #print(index_atom_a)
+        #print(index_atom_b)
+
+        new_particle.atoms.swap_atoms([(best_indices_a[self.index % n_atoms_symbol_a], best_indices_b[self.index % n_atoms_symbol_b])])
+        self.index += 1
+
+        return new_particle
+
+
+
 
 
 
