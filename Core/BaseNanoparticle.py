@@ -117,12 +117,12 @@ class BaseNanoparticle:
                         self.atoms.add_atoms([(lattice_index, symbol)])
         self.construct_neighbor_list()
 
-    def convex_shape(self, symbols, n_atoms_same_symbol, w, l, h, cutting_plane_generator):
+    def convex_shape(self, stoichiometry, w, l, h, cutting_plane_generator):
         self.rectangular_prism(w, l, h)
         self.construct_bounding_box()
         indices_current_atoms = set(self.atoms.get_indices())
 
-        final_n_atoms = sum(n_atoms_same_symbol)
+        final_n_atoms = sum(list(stoichiometry.values()))
         MAX_CUTTING_ATTEMPTS = 50
         cur_cutting_attempt = 0
         cutting_plane_generator.set_center(self.bounding_box.get_center())
@@ -165,7 +165,7 @@ class BaseNanoparticle:
         # redistribute the different elements randomly
         self.atoms.clear()
         self.atoms.add_atoms(zip(indices_current_atoms, ['X'] * len(indices_current_atoms)))
-        self.atoms.random_ordering(symbols, n_atoms_same_symbol)
+        self.atoms.random_ordering(stoichiometry)
 
         self.construct_neighbor_list()
 

@@ -1,5 +1,4 @@
 import numpy as np
-from collections import defaultdict
 
 from Core.BaseNanoparticle import BaseNanoparticle
 
@@ -7,45 +6,6 @@ from Core.BaseNanoparticle import BaseNanoparticle
 class Nanoparticle(BaseNanoparticle):
     def __init__(self, lattice):
         BaseNanoparticle.__init__(self, lattice)
-        self.exchange_energies = defaultdict(lambda: dict())
-
-    def compute_exchange_energy(self, index_a, index_b, local_energies, local_feature_classifier):
-        self.atoms.swap_atoms([(index_a, index_b)])
-
-        feature_key = local_feature_classifier.get_feature_key()
-        neighbors_a = self.neighbor_list[index_a]
-        neigbhors_b = self.neighbor_list[index_b]
-
-        exchange_energy = 0
-        old_features = self.get_atom_features(feature_key)
-        for atom_index in neighbors_a | neigbhors_b | {index_a} | {index_b}:
-            old_feature = old_features[atom_index]
-            new_feature = local_feature_classifier.predict_atom_feature(self, atom_index, True)
-
-            exchange_energy += local_energies[new_feature] - local_energies[old_feature]
-
-        self.atoms.swap_atoms([(index_a, index_b)])
-
-        return exchange_energy
-
-    def compute_exchange_energies(self, local_energies, local_feature_classifier, indices):
-        symbol_a = sorted(self.atoms.get_symbols())[0]
-        symbol_b = sorted(self.atoms.get_symbols())[1]
-
-        indices_symbol_a = list(filter(lambda x: self.get_symbol(x) == symbol_a, indices))
-        indices_symbol_b = list(filter(lambda x: self.get_symbol(x) == symbol_b, indices))
-
-        for index_a in indices_symbol_a:
-            for index_b in indices_symbol_b:
-                self.exchange_energies[index_a][index_b] = self.compute_exchange_energy(index_a, index_b, local_energies, local_feature_classifier)
-
-    def get_exchange_energies_as_list(self):
-        exchange_energies = []
-        for index_a in self.exchange_energies.keys():
-            for index_b in self.exchange_energies[index_a].keys():
-                exchange_energies.append((index_a, index_b, self.exchange_energies[index_a][index_b]))
-
-        return exchange_energies
 
     def truncated_octahedron(self, height, trunc, stoichiometry):
         bounding_box_anchor = self.lattice.get_anchor_index_of_centered_box(2 * height, 2 * height, 2 * height)

@@ -32,11 +32,8 @@ class ExchangeOperator:
         return np.random.geometric(p=p, size=1)[0]
 
     def guided_exchange(self, particle, local_energies, feature_key):
-        def env_feature(x):
-            if x >= len(local_energies)/2:
-                return int(x - len(local_energies)/2)
-            else:
-                return x
+        def env_from_feature(x):
+            return x % len(local_energies)
 
         new_particle = copy.deepcopy(particle)
         if new_particle.is_pure():
@@ -55,11 +52,11 @@ class ExchangeOperator:
 
         symbol1_indices = new_particle.get_indices_by_symbol(symbol1)
         np.random.shuffle(symbol1_indices)
-        symbol1_indices.sort(key=lambda x: env_differences[env_feature(atom_features[x])] if env_differences[env_feature(atom_features[x])] > 0 else 0, reverse=True)
+        symbol1_indices.sort(key=lambda x: env_differences[env_from_feature(atom_features[x])] if env_differences[env_from_feature(atom_features[x])] > 0 else 0, reverse=True)
 
         symbol2_indices = new_particle.get_indices_by_symbol(symbol2)
         np.random.shuffle(symbol2_indices)
-        symbol2_indices.sort(key=lambda x: env_differences[env_feature(atom_features[x])] if env_differences[env_feature(atom_features[x])] < 0 else 0)
+        symbol2_indices.sort(key=lambda x: env_differences[env_from_feature(atom_features[x])] if env_differences[env_from_feature(atom_features[x])] < 0 else 0)
 
         symbol1_index = symbol1_indices[self.index % len(symbol1_indices)]
         symbol2_index = symbol2_indices[self.index % len(symbol2_indices)]
