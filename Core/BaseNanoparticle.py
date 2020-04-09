@@ -102,8 +102,8 @@ class BaseNanoparticle:
     def get_indices_by_symbol(self, symbol):
         return self.atoms.get_indices_by_symbol(symbol)
 
-    def random_ordering(self, symbols, n_atoms_same_symbol):
-        self.atoms.random_ordering(symbols, n_atoms_same_symbol)
+    def random_ordering(self, stoichiometry):
+        self.atoms.random_ordering(stoichiometry)
 
     def rectangular_prism(self, w, l, h, symbol='X'):
         anchor_point = self.lattice.get_anchor_index_of_centered_box(w, l, h)

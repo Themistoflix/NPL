@@ -50,10 +50,10 @@ class IndexedAtoms:
             self.indices_by_symbol[symbol2].remove(index2)
             self.indices_by_symbol[symbol1].append(index2)
 
-    def random_ordering(self, symbols, n_atoms_same_symbol):
+    def random_ordering(self, stoichiometry):
         new_ordering = list()
-        for index, symbol in enumerate(symbols):
-            for i in range(n_atoms_same_symbol[index]):
+        for symbol in stoichiometry:
+            for i in range(stoichiometry[symbol]):
                 new_ordering.append(symbol)
 
         np.random.shuffle(new_ordering)

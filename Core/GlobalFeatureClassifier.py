@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 
 class GlobalFeatureClassifier:
@@ -13,10 +14,12 @@ class GlobalFeatureClassifier:
 
 
 class SimpleFeatureClassifier(GlobalFeatureClassifier):
-    def __init__(self, symbol_a, symbol_b):
+    def __init__(self, symbols):
         GlobalFeatureClassifier.__init__(self)
-        self.symbol_a = symbol_a
-        self.symbol_b = symbol_b
+        symbols_copy = copy.deepcopy(symbols)
+        symbols_copy.sort()
+        self.symbol_a = symbols_copy[0]
+        self.symbol_b = symbols_copy[1]
 
         self.feature_key = 'SFC'
         return
@@ -55,21 +58,18 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
 
 
 class TopologicalFeatureClassifier(SimpleFeatureClassifier):
-    def __init__(self, symbol_a, symbol_b):
-        SimpleFeatureClassifier.__init__(self, symbol_a, symbol_b)
-        self.symbol_a = symbol_a
-        self.symbol_b = symbol_b
-
+    def __init__(self, symbols):
+        SimpleFeatureClassifier.__init__(self, symbols)
         self.feature_key = 'TFC'
 
     def compute_feature_vector(self, particle):
         n_atoms = particle.get_n_atoms()
         n_aa_bonds, n_bb_bonds, n_ab_bonds = self.compute_respective_bond_counts(particle)
         n_corners_a = len(particle.get_atom_indices_from_coordination_number([6], symbol=self.symbol_a))
-        n_edge = len(particle.get_atom_indices_from_coordination_number([7], symbol=self.symbol_a))
+        n_edge_a = len(particle.get_atom_indices_from_coordination_number([7], symbol=self.symbol_a))
         n_terrace_a = len(particle.get_atom_indices_from_coordination_number([9], symbol=self.symbol_a))
 
         M = particle.get_stoichiometry()[self.symbol_a] * 0.1
 
-        feature_vector = np.array([n_aa_bonds/n_atoms, n_bb_bonds/n_atoms, n_ab_bonds/n_atoms, M, n_corners_a, n_edge, n_terrace_a])
+        feature_vector = np.array([n_aa_bonds/n_atoms, n_bb_bonds/n_atoms, n_ab_bonds/n_atoms, M, n_corners_a, n_edge_a, n_terrace_a])
         particle.set_feature_vector(self.feature_key, feature_vector)

@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from scipy.special import sph_harm
 
 
@@ -95,10 +96,12 @@ class SOAPCalculator(LocalEnvironmentCalculator):
 
 
 class NeighborCountingEnvironmentCalculator(LocalEnvironmentCalculator):
-    def __init__(self, symbol_a, symbol_b):
+    def __init__(self, symbols):
         LocalEnvironmentCalculator.__init__(self)
-        self.symbol_a = symbol_a
-        self.symbol_b = symbol_b
+        symbols_copy = copy.deepcopy(symbols)
+        symbols_copy.sort()
+        self.symbol_a = symbols_copy[0]
+        self.symbol_b = symbols_copy[1]
 
     def compute_local_environment(self, particle, lattice_index):
         n_a_atoms = 0

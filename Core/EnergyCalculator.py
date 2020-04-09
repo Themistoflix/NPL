@@ -2,6 +2,7 @@ from ase.optimize import BFGS
 from asap3 import EMT
 
 import numpy as np
+import copy
 import sklearn.gaussian_process as gp
 from sklearn.linear_model import BayesianRidge
 
@@ -116,3 +117,34 @@ class BayesianRRCalculator(EnergyCalculator):
     def compute_energy(self, particle):
         brr_energy = np.dot(np.transpose(self.ridge.coef_), particle.get_feature_vector(self.feature_key))
         particle.set_energy(self.energy_key, brr_energy)
+
+
+def compute_coefficients_for_linear_topological_model(global_topological_coefficients, symbols, n_atoms):
+    coordination_numbers = [6, 7, 9, 12]
+    symbols_copy = copy.deepcopy(symbols)
+    symbols_copy.sort()
+    symbol_a = symbols_copy[0]
+
+    E_aa_bond = global_topological_coefficients[0]/n_atoms
+    E_bb_bond = global_topological_coefficients[1]/n_atoms
+    E_ab_bond = global_topological_coefficients[2]/n_atoms
+    coordination_energies = {6: global_topological_coefficients[4], 7: global_topological_coefficients[5], 9: global_topological_coefficients[6], 12: 0}
+
+    coefficients = []
+    for symbol in symbols_copy:
+        for cn_number in coordination_numbers:
+            for n_symbol_a_atoms in range(cn_number + 1):
+                E = 0
+                if symbol == symbol_a:
+                    E += n_symbol_a_atoms*E_aa_bond/2
+                    E += (cn_number - n_symbol_a_atoms)*E_ab_bond/2
+                    E += coordination_energies[cn_number]
+                else:
+                    E += n_symbol_a_atoms*E_ab_bond/2
+                    E += (cn_number - n_symbol_a_atoms)*E_bb_bond/2
+
+                coefficients.append(E)
+
+    coefficients = np.array(coefficients)
+
+    return coefficients

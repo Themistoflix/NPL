@@ -75,3 +75,32 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
         self.kMeans = KMeans(n_clusters=self.n_cluster, random_state=0).fit(local_environments)
 
 
+class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
+    def __init__(self, local_environment_calculator):
+        LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
+        self.feature_key = 'TEC'
+
+    def compute_n_features(self, particle):
+        return 76
+
+    def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
+        symbol = particle.get_symbol(lattice_index)
+        symbols = sorted(particle.get_symbols())
+        symbol_index = symbols.index(symbol)
+
+        element_offset = symbol_index*38
+
+        if recompute_local_environment:
+            env = self.local_environment_calculator.compute_local_environment(particle, lattice_index)
+            particle.set_local_environment(lattice_index, env)
+
+        environment = particle.get_local_environment(lattice_index)
+        coordination_number = np.sum(environment)
+        coordination_number_offsets = {6: 0, 7: 7, 9: 15, 12: 25}
+
+        atom_feature = element_offset + coordination_number_offsets[coordination_number] + environment[0]
+
+        return atom_feature
+
+
+
