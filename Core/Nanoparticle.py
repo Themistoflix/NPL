@@ -41,8 +41,6 @@ class Nanoparticle(BaseNanoparticle):
                         if y_position < 1 - layer_width + to_be_removed + x_position:
                             continue
 
-
-
                     current_position_lower_layer = lower_layer_start_position + x_position * layer_basis_vector1 + y_position * layer_basis_vector2
                     current_position_upper_layer = upper_layer_start_position + x_position * layer_basis_vector1 + y_position * layer_basis_vector2
 

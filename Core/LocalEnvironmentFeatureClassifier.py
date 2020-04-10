@@ -7,30 +7,29 @@ class LocalEnvironmentFeatureClassifier:
         self.local_environment_calculator = local_environment_calculator
         self.feature_key = None
 
-    def compute_features_as_index_list(self, particle, recompute_local_environments=False):
+    def compute_atom_features(self, particle, recompute_local_environments=False):
         if recompute_local_environments:
             self.local_environment_calculator.compute_local_environments(particle)
 
-        n_features = self.compute_n_features(particle)
-
-        features_as_index_lists = list()  # need empty list in case of recalculation
-        for i in range(n_features):
-            l = list()
-            features_as_index_lists.append(l)
-
         for index in particle.get_indices():
-            feature = self.predict_atom_feature(particle, index)
-            features_as_index_lists[feature].append(index)
+            self.compute_atom_feature(particle, index, recompute_local_environments)
 
-        particle.set_features_as_index_lists(self.feature_key, features_as_index_lists)
-
-    def compute_feature_vector(self, particle, recompute_local_environments=False):
-        self.compute_features_as_index_list(particle, recompute_local_environments)
+    def compute_feature_vector(self, particle, recompute_atom_features=True, recompute_local_environments=False):
+        if recompute_atom_features:
+            self.compute_atom_features(particle, recompute_local_environments)
 
         n_features = self.compute_n_features(particle)
-        feature_vector = np.array([len(particle.get_features_as_index_lists(self.feature_key)[feature]) for feature in range(n_features)])
+        feature_vector = np.zeros(n_features)
+        atom_features = particle.get_atom_features(self.feature_key)
+        for index in particle.get_indices():
+            feature_vector[atom_features[index]] += 1
 
         particle.set_feature_vector(self.feature_key, feature_vector)
+
+    def compute_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
+        feature = self.predict_atom_feature(particle, lattice_index, recompute_local_environment)
+        atom_features = particle.get_atom_features(self.feature_key)
+        atom_features[lattice_index] = feature
 
     def get_feature_key(self):
         return self.feature_key
@@ -61,7 +60,7 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
 
         offset = symbol_index*self.n_cluster
         if recompute_local_environment:
-            environment = self.kMeans.predict([self.local_environment_calculator.compute_local_environment(particle, lattice_index)])[0]
+            environment = self.kMeans.predict([self.local_environment_calculator.predict_local_environment(particle, lattice_index)])[0]
         else:
             environment = self.kMeans.predict([particle.get_local_environment(lattice_index)])[0]
         return offset + environment
@@ -91,8 +90,7 @@ class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
         element_offset = symbol_index*38
 
         if recompute_local_environment:
-            env = self.local_environment_calculator.compute_local_environment(particle, lattice_index)
-            particle.set_local_environment(lattice_index, env)
+            self.local_environment_calculator.compute_local_environment(particle, lattice_index)
 
         environment = particle.get_local_environment(lattice_index)
         coordination_number = np.sum(environment)

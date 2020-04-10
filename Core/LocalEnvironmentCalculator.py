@@ -9,10 +9,13 @@ class LocalEnvironmentCalculator:
 
     def compute_local_environments(self, particle):
         for index in particle.get_indices():
-            local_env = self.compute_local_environment(particle, index)
-            particle.set_local_environment(index, local_env)
+            self.compute_local_environment(particle, index)
 
     def compute_local_environment(self, particle, lattice_index):
+        local_env = self.predict_local_environment(particle, lattice_index)
+        particle.set_local_environment(local_env)
+
+    def predict_local_environment(self, particle, lattice_index):
         raise NotImplementedError
 
 
@@ -21,7 +24,7 @@ class SOAPCalculator(LocalEnvironmentCalculator):
         LocalEnvironmentCalculator.__init__(self)
         self.l_max = l_max
 
-    def compute_local_environment(self, particle, lattice_index):
+    def predict_local_environment(self, particle, lattice_index):
         def map_onto_unit_sphere(cartesian_coordinates):
             # note the use of the scipy.special.sph_harm notation for phi and theta (which is the opposite of wikipedias)
             def angular_from_cartesian_coordinates(cartesian_coordinates):
@@ -103,7 +106,7 @@ class NeighborCountingEnvironmentCalculator(LocalEnvironmentCalculator):
         self.symbol_a = symbols_copy[0]
         self.symbol_b = symbols_copy[1]
 
-    def compute_local_environment(self, particle, lattice_index):
+    def predict_local_environment(self, particle, lattice_index):
         n_a_atoms = 0
         n_b_atoms = 0
 

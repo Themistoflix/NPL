@@ -21,7 +21,7 @@ class BaseNanoparticle:
         self.energies = dict()
 
         self.local_environments = dict()
-        self.features_as_index_lists = dict()
+        self.atom_features = dict()
         self.feature_vectors = dict()
 
     def from_particle_data(self, atoms, neighbor_list=None):
@@ -44,8 +44,7 @@ class BaseNanoparticle:
         data['lattice'] = lattice_data
         data['energies'] = self.energies
 
-        data['feature_vectors'] = self.feature_vectors
-        data['features_as_index_lists'] = self.features_as_index_lists
+        data['atom_features'] = self.atom_features
         data['local_environments'] = self.local_environments
 
         atom_indices = self.atoms.get_indices()
@@ -70,7 +69,7 @@ class BaseNanoparticle:
         self.atoms.add_atoms(list(zip(dictionary['atoms']['indices'], dictionary['atoms']['symbols'])))
 
         self.feature_vectors = dictionary['feature_vectors']
-        self.features_as_index_lists = dictionary['features_as_index_lists']
+        self.atom_features = dictionary['atom_features']
 
         self.local_environments = dictionary['local_environments']
 
@@ -304,19 +303,16 @@ class BaseNanoparticle:
     def get_feature_vector(self, key):
         return self.feature_vectors[key]
 
-    def set_features_as_index_lists(self, key, features_as_index_lists):
-        self.features_as_index_lists[key] = features_as_index_lists
+    def set_atom_features(self, atom_features, feature_key):
+        self.atom_features[feature_key] = atom_features
 
-    def get_features_as_index_lists(self, key):
-        return self.features_as_index_lists[key]
+    def set_atom_feature(self, feature_key, index, atom_feature):
+        self.atom_features[feature_key][index] = atom_feature
 
-    def get_atom_features(self, key):
-        atom_features = dict()
-        for feature, index_list in enumerate(self.features_as_index_lists[key]):
-            for index in index_list:
-                atom_features[index] = feature
-
-        return atom_features
+    def get_atom_features(self, feature_key):
+        if not feature_key in self.atom_features:
+            self.atom_features[feature_key] = dict()
+        return self.atom_features[feature_key]
 
     def set_local_environment(self, lattice_index, local_environment):
         self.local_environments[lattice_index] = local_environment

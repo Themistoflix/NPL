@@ -33,7 +33,7 @@ class ExchangeOperator:
 
     def guided_exchange(self, particle, local_energies, feature_key):
         def env_from_feature(x):
-            return x % len(local_energies)
+            return x % int(len(local_energies)/2)
 
         new_particle = copy.deepcopy(particle)
         if new_particle.is_pure():
