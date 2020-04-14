@@ -68,10 +68,13 @@ class BaseNanoparticle:
         self.energies = dictionary['energies']
         self.atoms.add_atoms(list(zip(dictionary['atoms']['indices'], dictionary['atoms']['symbols'])))
 
-        self.feature_vectors = dictionary['feature_vectors']
-        self.atom_features = dictionary['atom_features']
+        if 'feature_vectors' in dictionary:
+            self.feature_vectors = dictionary['feature_vectors']
+        if 'atom_features' in dictionary:
+            self.atom_features = dictionary['atom_features']
 
-        self.local_environments = dictionary['local_environments']
+        if 'local_environments' in dictionary:
+            self.local_environments = dictionary['local_environments']
 
     def load(self, filename):
         dictionary = pickle.load(open(filename, 'rb'))

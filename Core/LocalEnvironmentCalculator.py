@@ -13,7 +13,7 @@ class LocalEnvironmentCalculator:
 
     def compute_local_environment(self, particle, lattice_index):
         local_env = self.predict_local_environment(particle, lattice_index)
-        particle.set_local_environment(local_env)
+        particle.set_local_environment(lattice_index, local_env)
 
     def predict_local_environment(self, particle, lattice_index):
         raise NotImplementedError

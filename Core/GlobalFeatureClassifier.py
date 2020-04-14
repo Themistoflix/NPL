@@ -73,3 +73,22 @@ class TopologicalFeatureClassifier(SimpleFeatureClassifier):
 
         feature_vector = np.array([n_aa_bonds/n_atoms, n_bb_bonds/n_atoms, n_ab_bonds/n_atoms, M, n_corners_a, n_edge_a, n_terrace_a])
         particle.set_feature_vector(self.feature_key, feature_vector)
+
+
+class TopologicalFeatureClassifier2(SimpleFeatureClassifier):
+    def __init__(self, symbols):
+        SimpleFeatureClassifier.__init__(self, symbols)
+        self.feature_key = 'TFC'
+
+    def compute_feature_vector(self, particle):
+        n_atoms = particle.get_n_atoms()
+        n_aa_bonds, n_bb_bonds, n_ab_bonds = self.compute_respective_bond_counts(particle)
+        n_corners_a = len(particle.get_atom_indices_from_coordination_number([6], symbol=self.symbol_a))
+        n_edge_a = len(particle.get_atom_indices_from_coordination_number([7], symbol=self.symbol_a))
+        n_100_terrace_a = len(particle.get_atom_indices_from_coordination_number([8], symbol=self.symbol_a))
+        n_111_terrace_a = len(particle.get_atom_indices_from_coordination_number([9], symbol=self.symbol_a))
+
+        M = particle.get_stoichiometry()[self.symbol_a] * 0.1
+
+        feature_vector = np.array([n_aa_bonds/n_atoms, n_bb_bonds/n_atoms, n_ab_bonds/n_atoms, M, n_corners_a, n_edge_a, n_100_terrace_a, n_111_terrace_a])
+        particle.set_feature_vector(self.feature_key, feature_vector)
