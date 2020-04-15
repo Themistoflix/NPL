@@ -300,6 +300,11 @@ class BaseNanoparticle:
     def get_energy(self, key):
         return self.energies[key]
 
+    def has_energy(self, key):
+        if key in self.energies:
+            return True
+        return False
+
     def set_feature_vector(self, key, feature_vector):
         self.feature_vectors[key] = feature_vector
 
