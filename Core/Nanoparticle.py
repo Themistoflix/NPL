@@ -47,7 +47,7 @@ class Nanoparticle(BaseNanoparticle):
                     lower_layer_index = self.lattice.get_index_from_lattice_position(current_position_lower_layer)
                     upper_layer_index = self.lattice.get_index_from_lattice_position(current_position_upper_layer)
 
-                    self.atoms.add_atoms([(lower_layer_index, 'X'), (upper_layer_index, 'X')])
+                    self.atoms.add_atoms([(lower_layer_index, 'Pt'), (upper_layer_index, 'Au')])
 
         self.construct_neighbor_list()
 
@@ -60,5 +60,6 @@ class Nanoparticle(BaseNanoparticle):
             if sum(list(transformed_stoichiometry.values())) != n_atoms:
                 difference = n_atoms - sum(list(transformed_stoichiometry.values()))
                 transformed_stoichiometry[list(transformed_stoichiometry.keys())[0]] += difference
-
-        self.random_ordering(transformed_stoichiometry)
+            self.random_ordering(transformed_stoichiometry)
+        else:
+            self.random_ordering(stoichiometry)
