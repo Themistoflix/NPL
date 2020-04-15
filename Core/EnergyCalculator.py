@@ -139,12 +139,14 @@ def compute_coefficients_for_linear_topological_model(global_topological_coeffic
             for n_symbol_a_atoms in range(cn_number + 1):
                 E = 0
                 if symbol == symbol_a:
-                    E += n_symbol_a_atoms*E_aa_bond/2
-                    E += (cn_number - n_symbol_a_atoms)*E_ab_bond/2
-                    E += coordination_energies[cn_number]
+                    E += 0.1 * global_topological_coefficients[3]
+                    E += (n_symbol_a_atoms*E_aa_bond/2)
+                    E += ((cn_number - n_symbol_a_atoms)*E_ab_bond/2)
+                    E += (coordination_energies[cn_number])
                 else:
-                    E += n_symbol_a_atoms*E_ab_bond/2
-                    E += (cn_number - n_symbol_a_atoms)*E_bb_bond/2
+
+                    E += (n_symbol_a_atoms*E_ab_bond/2)
+                    E += ((cn_number - n_symbol_a_atoms)*E_bb_bond/2)
 
                 coefficients.append(E)
 
@@ -170,12 +172,13 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
             for n_symbol_a_atoms in range(cn_number + 1):
                 E = 0
                 if symbol == symbol_a:
-                    E += n_symbol_a_atoms*E_aa_bond/2
-                    E += (cn_number - n_symbol_a_atoms)*E_ab_bond/2
-                    E += coordination_energies[cn_number]
+                    E += (0.1 * global_topological_coefficients[3])
+                    E += (n_symbol_a_atoms*E_aa_bond/2)
+                    E += ((cn_number - n_symbol_a_atoms)*E_ab_bond/2)
+                    E += (coordination_energies[cn_number])
                 else:
-                    E += n_symbol_a_atoms*E_ab_bond/2
-                    E += (cn_number - n_symbol_a_atoms)*E_bb_bond/2
+                    E += (n_symbol_a_atoms*E_ab_bond/2)
+                    E += ((cn_number - n_symbol_a_atoms)*E_bb_bond/2)
 
                 coefficients.append(E)
 

@@ -11,12 +11,12 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, linear_feature
     symbols = start_particle.get_symbols()
 
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
-    #topological_feature_classifier = TopologicalFeatureClassifier2(symbols)
+    topological_feature_classifier = TopologicalFeatureClassifier2(symbols)
 
     energy_key = energy_calculator.get_energy_key()
 
     local_env_calculator.compute_local_environments(start_particle)
-    #topological_feature_classifier.compute_feature_vector(start_particle)
+    topological_feature_classifier.compute_feature_vector(start_particle)
 
     linear_feature_classifier.compute_feature_vector(start_particle)
     energy_calculator.compute_energy(start_particle)
@@ -29,6 +29,8 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, linear_feature
     best_particles = [(start_particle, 0)]
     lowest_energy = old_E
 
+    #old_atom_features = copy.deepcopy(start_particle.get_atom_features(feature_key))
+    #old_environments = copy.deepcopy(start_particle.get_local_environments())
     for i in range(1, steps + 1):
         old_atom_features = copy.deepcopy(start_particle.get_atom_features(feature_key))
         old_environments = copy.deepcopy(start_particle.get_local_environments())
@@ -55,7 +57,7 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, linear_feature
             local_env_calculator.compute_local_environment(start_particle, index)
             linear_feature_classifier.compute_atom_feature(start_particle, index)
 
-        #topological_feature_classifier.compute_feature_vector(start_particle)
+        topological_feature_classifier.compute_feature_vector(start_particle)
         linear_feature_classifier.compute_feature_vector(start_particle, recompute_atom_features=False)
 
         energy_calculator.compute_energy(start_particle)
@@ -69,6 +71,9 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, linear_feature
             exchange_operator.reset_index()
             print("Step: {0} New E: {1}".format(i, new_E))
             exchange_operator.update(start_particle, neighborhood, exchanged_indices)
+            print(np.dot(start_particle.get_feature_vector('TEC'), local_energies))
+            #old_atom_features = copy.deepcopy(start_particle.get_atom_features(feature_key))
+            #old_environments = copy.deepcopy(start_particle.get_local_environments())
 
             if new_E < lowest_energy:
                 lowest_energy = new_E
@@ -87,12 +92,12 @@ def run_normal_MC(beta, steps, start_particle, energy_calculator, linear_feature
     symbols = start_particle.get_symbols()
 
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
-    #topological_feature_classifier = TopologicalFeatureClassifier2(symbols)
+    topological_feature_classifier = TopologicalFeatureClassifier2(symbols)
 
     energy_key = energy_calculator.get_energy_key()
 
     local_env_calculator.compute_local_environments(start_particle)
-    #topological_feature_classifier.compute_feature_vector(start_particle)
+    topological_feature_classifier.compute_feature_vector(start_particle)
 
     linear_feature_classifier.compute_feature_vector(start_particle)
     energy_calculator.compute_energy(start_particle)
@@ -102,7 +107,7 @@ def run_normal_MC(beta, steps, start_particle, energy_calculator, linear_feature
 
     old_E = start_particle.get_energy(energy_key)
 
-    best_particles = [(start_particle.get_as_dictionary(), 0)]
+    best_particles = [(start_particle, 0)]
     lowest_energy = old_E
 
     old_environments = copy.deepcopy(start_particle.get_local_environments())
@@ -129,7 +134,7 @@ def run_normal_MC(beta, steps, start_particle, energy_calculator, linear_feature
             local_env_calculator.compute_local_environment(start_particle, index)
             linear_feature_classifier.compute_atom_feature(start_particle, index)
 
-        #topological_feature_classifier.compute_feature_vector(start_particle)
+        topological_feature_classifier.compute_feature_vector(start_particle)
         linear_feature_classifier.compute_feature_vector(start_particle, recompute_atom_features=False)
 
         energy_calculator.compute_energy(start_particle)
@@ -143,9 +148,10 @@ def run_normal_MC(beta, steps, start_particle, energy_calculator, linear_feature
             old_environments = copy.deepcopy(start_particle.get_local_environments())
             print("Step: {0} New E: {1}".format(i, new_E))
 
+
             if new_E < lowest_energy:
                 lowest_energy = new_E
-                best_particles.append((start_particle.get_as_dictionary(), i))
+                best_particles.append((start_particle, i))
         else:
             start_particle.atoms.swap_atoms(exchanges)
             start_particle.set_local_environments(old_environments)

@@ -42,9 +42,9 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
                 symbol_neighbor = particle.atoms.get_symbol(neighbor)
 
                 if self.symbol_a != symbol_neighbor:
-                    n_ab_bonds += 1
+                    n_ab_bonds += 0.5
                 else:
-                    n_aa_bonds += 1
+                    n_aa_bonds += 0.5
 
         for lattice_index_with_symbol_b in particle.atoms.get_indices_by_symbol(self.symbol_b):
             neighbor_list = particle.neighbor_list[lattice_index_with_symbol_b]
@@ -52,7 +52,9 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
                 symbol_neighbor = particle.atoms.get_symbol(neighbor)
 
                 if self.symbol_b == symbol_neighbor:
-                    n_bb_bonds += 1
+                    n_bb_bonds += 0.5
+                else:
+                    n_ab_bonds += 0.5
 
         return n_aa_bonds, n_bb_bonds, n_ab_bonds
 

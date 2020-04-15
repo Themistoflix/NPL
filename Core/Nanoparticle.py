@@ -51,12 +51,14 @@ class Nanoparticle(BaseNanoparticle):
 
         self.construct_neighbor_list()
 
+        transformed_stoichiometry = dict()
         if sum(list(stoichiometry.values())) <= 1:
             n_atoms = self.get_n_atoms()
+            print("N atoms: {0}".format(n_atoms))
             for symbol in stoichiometry:
-                stoichiometry[symbol] = int(stoichiometry[symbol]*n_atoms)
-            if sum(list(stoichiometry.values())) != n_atoms:
-                difference = n_atoms - sum(list(stoichiometry.values()))
-                stoichiometry[list(stoichiometry.keys())[0]] += difference
+                transformed_stoichiometry[symbol] = int(stoichiometry[symbol]*n_atoms)
+            if sum(list(transformed_stoichiometry.values())) != n_atoms:
+                difference = n_atoms - sum(list(transformed_stoichiometry.values()))
+                transformed_stoichiometry[list(transformed_stoichiometry.keys())[0]] += difference
 
-        self.random_ordering(stoichiometry)
+        self.random_ordering(transformed_stoichiometry)
