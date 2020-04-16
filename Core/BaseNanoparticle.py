@@ -33,7 +33,7 @@ class BaseNanoparticle:
 
         self.construct_bounding_box()
 
-    def get_as_dictionary(self):
+    def get_as_dictionary(self, thin=False):
         data = dict()
         lattice_data = dict()
         lattice_data['width'] = self.lattice.width
@@ -44,14 +44,17 @@ class BaseNanoparticle:
         data['lattice'] = lattice_data
         data['energies'] = self.energies
 
-        data['atom_features'] = self.atom_features
-        data['local_environments'] = self.local_environments
+        if not thin:
+            data['atom_features'] = self.atom_features
+            data['local_environments'] = self.local_environments
 
         atom_indices = self.atoms.get_indices()
         corresponding_symbols = [self.atoms.get_symbol(index) for index in atom_indices]
 
         data['atoms'] = {'indices': atom_indices, 'symbols': corresponding_symbols}
-        data['neighbor_list'] = self.neighbor_list.list
+
+        if not thin:
+            data['neighbor_list'] = self.neighbor_list.list
 
         return data
 
@@ -62,11 +65,15 @@ class BaseNanoparticle:
     def build_from_dictionary(self, dictionary):
         lattice_data = dictionary['lattice']
         self.lattice = FCCLattice(lattice_data['width'], lattice_data['length'], lattice_data['height'], lattice_data['lattice_constant'])
-        self.neighbor_list = NeighborList(self.lattice)
-        self.neighbor_list.list = dictionary['neighbor_list']
 
         self.energies = dictionary['energies']
         self.atoms.add_atoms(list(zip(dictionary['atoms']['indices'], dictionary['atoms']['symbols'])))
+
+        self.neighbor_list = NeighborList(self.lattice)
+        if 'neighbor_list' in dictionary:
+            self.neighbor_list.list = dictionary['neighbor_list']
+        else:
+            self.construct_neighbor_list()
 
         if 'feature_vectors' in dictionary:
             self.feature_vectors = dictionary['feature_vectors']
