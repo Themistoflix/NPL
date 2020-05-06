@@ -26,7 +26,7 @@ class EMTCalculator(EnergyCalculator):
         self.steps = steps
         self.energy_key = 'EMT'
 
-    def compute_energy(self, particle, feature_key=None):
+    def compute_energy(self, particle, return_optimized_atoms=False):
         cell_width = particle.lattice.width * particle.lattice.lattice_constant
         cell_length = particle.lattice.length * particle.lattice.lattice_constant
         cell_height = particle.lattice.height * particle.lattice.lattice_constant
@@ -39,6 +39,9 @@ class EMTCalculator(EnergyCalculator):
 
         energy = atoms.get_potential_energy()
         particle.set_energy(self.energy_key, energy)
+
+        if return_optimized_atoms:
+            return atoms
 
 
 class GPRCalculator(EnergyCalculator):
@@ -181,6 +184,32 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
                     E += ((cn_number - n_symbol_a_atoms)*E_bb_bond/2)
 
                 coefficients.append(E)
+
+    coefficients = np.array(coefficients)
+
+    return coefficients
+
+def compute_coefficients_for_linear_topological_model3(global_topological_coefficients, symbols, n_atoms):
+    coordination_numbers = list(range(13))
+    symbols_copy = copy.deepcopy(symbols)
+    symbols_copy.sort()
+    symbol_a = symbols_copy[0]
+
+    E_aa_bond = global_topological_coefficients[0]
+
+    coordination_energies_a = dict()
+    for index, cn in enumerate(coordination_numbers):
+        coordination_energies_a[cn] = global_topological_coefficients[index + 1]
+
+    coefficients = []
+    for symbol in symbols_copy:
+        for n_symbol_a_atoms in coordination_numbers:
+            E = 0
+            if symbol == symbol_a:
+                E += (n_symbol_a_atoms*E_aa_bond/2)
+                E += (coordination_energies_a[n_symbol_a_atoms])
+                coefficients.append(E)
+    coefficients += [0]*len(coordination_numbers)
 
     coefficients = np.array(coefficients)
 

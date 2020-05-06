@@ -128,4 +128,38 @@ class TopologicalEnvironmentClassifier2(LocalEnvironmentFeatureClassifier):
         return atom_feature
 
 
+class TopologicalEnvironmentClassifier3(LocalEnvironmentFeatureClassifier):
+    def __init__(self, local_environment_calculator):
+        LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
+        self.feature_key = 'TEC'
+
+        self.coordination_number_offsets = dict()
+        self.coordination_number_offsets[0] = 0
+#        for n_symbol_a_atoms in range(13):
+ #           self.coordination_number_offsets[n_symbol_a_atoms] = sum([13 - i for i in range(n_symbol_a_atoms)])
+
+        for n_symbol_a_atoms in range(13):
+            self.coordination_number_offsets[n_symbol_a_atoms] = n_symbol_a_atoms
+        self.n_envs = 13
+
+    def compute_n_features(self, particle):
+        return self.n_envs*2
+
+    def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
+        symbol = particle.get_symbol(lattice_index)
+        symbols = sorted(particle.get_symbols())
+        symbol_index = symbols.index(symbol)
+
+        element_offset = symbol_index*self.n_envs
+
+        if recompute_local_environment:
+            self.local_environment_calculator.compute_local_environment(particle, lattice_index)
+
+        environment = particle.get_local_environment(lattice_index)
+        coordination_number = environment[0]
+
+        atom_feature = element_offset + self.coordination_number_offsets[coordination_number]
+
+        return atom_feature
+
 

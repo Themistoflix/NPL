@@ -94,3 +94,28 @@ class TopologicalFeatureClassifier2(SimpleFeatureClassifier):
 
         feature_vector = np.array([n_aa_bonds/n_atoms, n_bb_bonds/n_atoms, n_ab_bonds/n_atoms, M, n_corners_a, n_edge_a, n_100_terrace_a, n_111_terrace_a])
         particle.set_feature_vector(self.feature_key, feature_vector)
+
+
+class TopologicalFeatureClassifier3(SimpleFeatureClassifier):
+    def __init__(self, symbols):
+        SimpleFeatureClassifier.__init__(self, symbols)
+        self.feature_key = 'TFC'
+
+    def compute_feature_vector(self, particle):
+        n_atoms = particle.get_n_atoms() - particle.get_n_atoms_of_symbol('X')
+        n_aa_bonds, n_bb_bonds, n_ab_bonds = self.compute_respective_bond_counts(particle)
+        symbol_a_features = [0]*13
+        for index in particle.get_indices():
+            if particle.get_symbol(index) != 'X':
+                env = particle.get_local_environment(index)
+                symbol_a_features[env[0]] += 1
+
+        #symbol_a_features = [len(particle.get_atom_indices_from_coordination_number([i], symbol=self.symbol_a)) for i in
+        #                     coordination_numbers]
+        #symbol_b_features = [len(particle.get_atom_indices_from_coordination_number([i], symbol=self.symbol_b)) for i in
+        #                     coordination_numbers]
+
+        #features = [n_aa_bonds, n_bb_bonds, n_ab_bonds] + symbol_a_features
+        features = [n_aa_bonds] + symbol_a_features
+        feature_vector = np.array(features)
+        particle.set_feature_vector(self.feature_key, feature_vector)

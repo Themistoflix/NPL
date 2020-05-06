@@ -1,6 +1,7 @@
 import numpy as np
 
 from Core.BaseNanoparticle import BaseNanoparticle
+from ase import Atoms
 
 
 class Nanoparticle(BaseNanoparticle):
@@ -63,3 +64,47 @@ class Nanoparticle(BaseNanoparticle):
             self.random_ordering(transformed_stoichiometry)
         else:
             self.random_ordering(stoichiometry)
+
+    def get_ASE_atoms(self, centered=True, exclude_X=True):
+        atom_positions = list()
+        atomic_symbols = list()
+        for lattice_index in self.atoms.get_indices():
+            if exclude_X is True:
+                if self.atoms.get_symbol(lattice_index) is 'X':
+                    continue
+            atom_positions.append(self.lattice.get_cartesian_position_from_index(lattice_index))
+            atomic_symbols.append(self.atoms.get_symbol(lattice_index))
+
+        atoms = Atoms(positions=atom_positions, symbols=atomic_symbols)
+        if centered:
+            COM = atoms.get_center_of_mass()
+            return Atoms(positions=[position - COM for position in atom_positions], symbols=atomic_symbols)
+        else:
+            return atoms
+
+    def surface_ordering(self, base_symbol, surface_stoichiometry):
+        surface_indices = self.get_atom_indices_from_coordination_number(list(range(12)))
+        inner_indices = self.get_inner_atom_indices()
+        print(len(surface_indices))
+        print(len(inner_indices))
+
+        transformed_stoichiometry = dict()
+        if sum(list(surface_stoichiometry.values())) <= 1:
+            n_atoms = len(surface_indices)
+            print("N surface atoms: {0}".format(n_atoms))
+            for symbol in surface_stoichiometry:
+                transformed_stoichiometry[symbol] = int(surface_stoichiometry[symbol]*n_atoms)
+            if sum(list(transformed_stoichiometry.values())) != n_atoms:
+                difference = n_atoms - sum(list(transformed_stoichiometry.values()))
+                transformed_stoichiometry[list(transformed_stoichiometry.keys())[0]] += difference
+
+            symbols = [symbol for symbol in transformed_stoichiometry for i in range(transformed_stoichiometry[symbol])]
+            np.random.shuffle(surface_indices)
+            self.atoms.transform_atoms(zip(surface_indices, symbols))
+
+        else:
+            symbols = [symbol for symbol in surface_stoichiometry for i in range(surface_stoichiometry[symbol])]
+            np.random.shuffle(surface_indices)
+            self.atoms.transform_atoms(zip(surface_indices, symbols))
+
+        self.atoms.transform_atoms(zip(inner_indices, [base_symbol]*len(inner_indices)))
