@@ -274,8 +274,8 @@ class BaseNanoparticle:
     def get_stoichiometry(self):
         return self.atoms.get_stoichiometry()
 
-    def get_n_atoms(self):
-        return self.atoms.get_n_atoms()
+    def get_n_atoms(self, include_X=True):
+        return self.atoms.get_n_atoms(include_X)
 
     def get_n_atoms_of_symbol(self, symbol):
         return self.atoms.get_n_atoms_of_symbol(symbol)

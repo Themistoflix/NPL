@@ -108,3 +108,23 @@ class Nanoparticle(BaseNanoparticle):
             self.atoms.transform_atoms(zip(surface_indices, symbols))
 
         self.atoms.transform_atoms(zip(inner_indices, [base_symbol]*len(inner_indices)))
+
+    def coat(self):
+        surface_vacancies = self.get_surface_vacancies()
+        self.add_atoms(list(zip(surface_vacancies, ['X']*len(surface_vacancies))))
+
+    def enforce_atom_number(self, n_atoms, fill_symbol):
+        n_atoms_self = self.get_n_atoms(include_X=False)
+
+        if n_atoms_self > n_atoms:
+            #transform random into X
+            diff = n_atoms_self - n_atoms
+            indices_to_be_removed = np.random.choice(self.get_atom_indices_from_coordination_number(range(11)), diff, False)
+            self.transform_atoms(list(zip(indices_to_be_removed, ['X']*diff)))
+
+        elif n_atoms_self < n_atoms:
+            diff = n_atoms - n_atoms_self
+            surface_vacancies = list(self.get_surface_vacancies())
+
+            indices_to_be_added = np.random.choice(surface_vacancies, diff, False)
+            self.add_atoms(list(zip(indices_to_be_added, [fill_symbol]*diff)))

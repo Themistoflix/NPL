@@ -1,6 +1,6 @@
 import numpy as np
 from collections import defaultdict
-
+import copy
 
 class IndexedAtoms:
     def __init__(self):
@@ -27,7 +27,7 @@ class IndexedAtoms:
             indices = self.get_indices()
         symbols = [self.symbol_by_index[index] for index in indices]
 
-        return zip(indices, symbols)
+        return copy.deepcopy(list(zip(indices, symbols)))
 
     def clear(self):
         self.symbol_by_index.clear()
@@ -92,7 +92,7 @@ class IndexedAtoms:
         return symbols
 
     def get_symbol(self, index):
-        return self.symbol_by_index[index]
+        return copy.deepcopy(self.symbol_by_index[index])
 
     def get_indices_by_symbol(self, symbol):
         if symbol in self.indices_by_symbol.keys():
@@ -100,8 +100,15 @@ class IndexedAtoms:
         else:
             return []
 
-    def get_n_atoms(self):
-        return len(self.symbol_by_index)
+    def get_n_atoms(self, include_X=True):
+        if include_X:
+            return len(self.symbol_by_index)
+        else:
+            n_atoms = 0
+            for symbol in self.get_symbols():
+                if symbol != 'X':
+                    n_atoms += self.get_n_atoms_of_symbol(symbol)
+            return n_atoms
 
     def get_n_atoms_of_symbol(self, symbol):
         if symbol in self.indices_by_symbol.keys():
