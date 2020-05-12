@@ -120,7 +120,7 @@ class TopologicalEnvironmentClassifier2(LocalEnvironmentFeatureClassifier):
             self.local_environment_calculator.compute_local_environment(particle, lattice_index)
 
         environment = particle.get_local_environment(lattice_index)
-        coordination_number = np.sum(environment)
+        coordination_number = len(particle.neighbor_list[lattice_index])
         coordination_number_offsets = {6: 0, 7: 7, 8: 15, 9: 24, 12: 34}
 
         atom_feature = element_offset + coordination_number_offsets[coordination_number] + environment[0]

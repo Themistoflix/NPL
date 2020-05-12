@@ -55,7 +55,6 @@ class Nanoparticle(BaseNanoparticle):
         transformed_stoichiometry = dict()
         if sum(list(stoichiometry.values())) <= 1:
             n_atoms = self.get_n_atoms()
-            print("N atoms: {0}".format(n_atoms))
             for symbol in stoichiometry:
                 transformed_stoichiometry[symbol] = int(stoichiometry[symbol]*n_atoms)
             if sum(list(transformed_stoichiometry.values())) != n_atoms:
