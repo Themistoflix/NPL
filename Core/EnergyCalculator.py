@@ -120,6 +120,9 @@ class BayesianRRCalculator(EnergyCalculator):
     def set_coefficients(self, new_coefficients):
         self.ridge.coef_ = new_coefficients
 
+    def set_feature_key(self, feature_key):
+        self.feature_key = feature_key
+
     def compute_energy(self, particle):
         brr_energy = np.dot(np.transpose(self.ridge.coef_), particle.get_feature_vector(self.feature_key))
         particle.set_energy(self.energy_key, brr_energy)

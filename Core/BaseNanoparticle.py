@@ -29,9 +29,9 @@ class BaseNanoparticle:
         if neighbor_list is None:
             self.construct_neighbor_list()
         else:
-            self.neighbor_list = neighbor_list()
+            self.neighbor_list = neighbor_list
 
-        self.construct_bounding_box()
+        #self.construct_bounding_box()
 
     def get_as_dictionary(self, thin=False):
         data = dict()

@@ -127,3 +127,23 @@ class Nanoparticle(BaseNanoparticle):
 
             indices_to_be_added = np.random.choice(surface_vacancies, diff, False)
             self.add_atoms(list(zip(indices_to_be_added, [fill_symbol]*diff)))
+
+    def adjust_stoichiometry(self, target_stoichiometry):
+        def transform_n_random_atoms(symbol_from, symbol_to, n_atoms):
+            symbol_from_atoms = self.get_indices_by_symbol(symbol_from)
+            atoms_to_be_transformed = np.random.choice(symbol_from_atoms, n_atoms, replace=False)
+            self.transform_atoms(zip(atoms_to_be_transformed, [symbol_to] * n_atoms))
+
+        for symbol in self.get_stoichiometry():
+            if symbol in target_stoichiometry:
+                difference = self.get_stoichiometry()[symbol] - target_stoichiometry[symbol]
+                if difference > 0:
+                    transform_n_random_atoms(symbol, 'Z', difference)
+
+        for symbol in target_stoichiometry:
+            difference = target_stoichiometry[symbol]
+            if symbol in self.get_stoichiometry():
+                difference = target_stoichiometry[symbol] - self.get_stoichiometry()[symbol]
+            transform_n_random_atoms('Z', symbol, difference)
+        return
+
