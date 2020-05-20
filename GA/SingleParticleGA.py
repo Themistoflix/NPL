@@ -1,70 +1,86 @@
 import numpy as np
 from GA import CutAndSpliceOperator
 from GA import ExchangeOperator
-from GA import MutationOperator
 
 import Core.Profiler
 
 
-@Core.Profiler.profile
+#@Core.Profiler.profile
+def compute_fitness(particle, E_min, E_max, energy_key):
+    if E_max == E_min:
+        return 0
+    normalized_energy = (particle.get_energy(energy_key) - E_min)/(E_max - E_min)
+    return np.exp(-4*normalized_energy)
+
+
 def run_single_particle_GA(start_population, unsuccessful_gens_for_convergence, energy_calculator, local_env_calculator, local_feature_classifier):
     unsuccessful_gens = 0
     energy_key = energy_calculator.get_energy_key()
-    symbols = start_population[0].get_symbols()
-
-    population_size = len(start_population)
-    n_parents = int(0.3*population_size)
 
     for p in start_population:
         local_env_calculator.compute_local_environments(p)
         local_feature_classifier.compute_feature_vector(p)
         energy_calculator.compute_energy(p)
 
-    mutation_operator = MutationOperator.MutationOperator(0.5, symbols)
     exchange_operator = ExchangeOperator.ExchangeOperator(0.5)
     cut_and_splice_operator = CutAndSpliceOperator.CutAndSpliceOperator(0, 10)
 
     cur_population = start_population
     generation = 0
     best_energies = []
+    energy_evaluations = 0
+
+    cur_population.sort(key=lambda x: x.get_energy(energy_key))
+    best_energies.append((cur_population[0].get_energy(energy_key), energy_evaluations))
     while unsuccessful_gens < unsuccessful_gens_for_convergence:
         print("Generation: {}".format(generation))
-        cur_population.sort(key=lambda x: x.get_energy(energy_key))
-        best_energies.append((cur_population[0].get_energy(energy_key), generation))
+
+        E_min = cur_population[0].get_energy(energy_key)
+        E_max = cur_population[-1].get_energy(energy_key)
         generation += 1
 
-        parents = cur_population[:n_parents]
+        fitness_values = np.array([compute_fitness(p, E_min, E_max, energy_key) for p in cur_population])
+        if np.sum(fitness_values) == 0:
+            break
+        fitness_values /= np.sum(fitness_values)
 
-        for i in range(population_size):
+        counter = 0
+        while True:
+            print("Counter: {}".format(counter))
+            counter += 1
+
             p = np.random.rand()
-            if p < 0.2:
-                parent1, parent2 = np.random.choice(parents, 2, replace=False)
+            if p < 0.4:
+                parent1, parent2 = np.random.choice(cur_population, 2, replace=False, p=fitness_values)
                 new_offspring = cut_and_splice_operator.cut_and_splice(parent1, parent2)
             else:
-                parent = np.random.choice(parents, 1)[0]
+                parent = np.random.choice(cur_population, 1, p=fitness_values)[0]
                 new_offspring = exchange_operator.random_exchange(parent)
-            # else:
-            #   parent = np.random.choice(parents, 1)[0]
-            #    new_offspring = mutation_operator.random_mutation(parent)
 
             local_env_calculator.compute_local_environments(new_offspring)
             local_feature_classifier.compute_feature_vector(new_offspring)
             energy_calculator.compute_energy(new_offspring)
+            energy_evaluations += 1
 
-            cur_population.append(new_offspring)
+            new_energy = new_offspring.get_energy(energy_key)
+            unique = True
+            for particle in cur_population:
+                if np.abs(new_energy - particle.get_energy(energy_key)) < 1e-6:
+                    unique = False
+                    break
+            if unique:
+                break
 
-        if generation > 10:
-            break
+        cur_population.append(new_offspring)
 
         cur_population.sort(key=lambda x: x.get_energy(energy_key))
-        cur_population = cur_population[:population_size]
+        cur_population = cur_population[:-1]
 
         if cur_population[0].get_energy(energy_key) == best_energies[-1][0]:
             unsuccessful_gens += 1
         else:
             unsuccessful_gens = 0
+            best_energies.append((cur_population[0].get_energy(energy_key), energy_evaluations))
             print("New best energy: {}".format(cur_population[0].get_energy(energy_key)))
 
-    cur_population.sort(key=lambda x: x.get_energy(energy_key))
-
-    return best_energies, generation, cur_population[0]
+    return best_energies, cur_population[0], energy_evaluations

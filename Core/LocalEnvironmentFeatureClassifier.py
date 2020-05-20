@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.cluster import KMeans
+import copy
 
 
 class LocalEnvironmentFeatureClassifier:
@@ -105,8 +106,12 @@ class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
 
 
 class TopologicalEnvironmentClassifier2(LocalEnvironmentFeatureClassifier):
-    def __init__(self, local_environment_calculator):
+    def __init__(self, local_environment_calculator, symbols):
         LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
+        symbols_copy = copy.deepcopy(symbols)
+        symbols_copy.sort()
+        self.symbols = symbols_copy
+
         self.feature_key = 'TEC'
 
     def compute_n_features(self, particle):
@@ -114,8 +119,7 @@ class TopologicalEnvironmentClassifier2(LocalEnvironmentFeatureClassifier):
 
     def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
         symbol = particle.get_symbol(lattice_index)
-        symbols = sorted(particle.get_symbols())
-        symbol_index = symbols.index(symbol)
+        symbol_index = self.symbols.index(symbol)
 
         element_offset = symbol_index*47
 

@@ -58,7 +58,7 @@ class MCSearch(GOSearch):
         global_feature_classifier = GFC.TopologicalFeatureClassifier2(symbols)
 
         self.energy_calculator = EC.BayesianRRCalculator(global_feature_classifier.get_feature_key())
-        self.local_feature_classifier = LFC.TopologicalEnvironmentClassifier2(local_env_calculator)
+        self.local_feature_classifier = LFC.TopologicalEnvironmentClassifier2(local_env_calculator, symbols)
 
         for p in training_set:
             local_env_calculator.compute_local_environments(p)
@@ -106,12 +106,13 @@ class GASearch(GOSearch):
         self.local_feature_classifier = None
 
     def fit_energy_expression(self, training_set):
-        symbols = training_set[0].get_symbols()
+        # symbols = training_set[0].get_symbols()
+        symbols = ['Pt', 'Au']
         local_env_calculator = LEC.NeighborCountingEnvironmentCalculator(symbols)
         global_feature_classifier = GFC.TopologicalFeatureClassifier2(symbols)
 
         self.energy_calculator = EC.BayesianRRCalculator(global_feature_classifier.get_feature_key())
-        self.local_feature_classifier = LFC.TopologicalEnvironmentClassifier2(local_env_calculator)
+        self.local_feature_classifier = LFC.TopologicalEnvironmentClassifier2(local_env_calculator, symbols)
         self.local_env_calculator = local_env_calculator
 
         for p in training_set:

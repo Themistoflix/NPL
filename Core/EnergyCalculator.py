@@ -85,7 +85,7 @@ class MixingEnergyCalculator(EnergyCalculator):
     def compute_mixing_parameters(self, particle, symbols):
         n_atoms = particle.atoms.get_n_atoms()
         for symbol in symbols:
-            particle.random_ordering([symbol], [n_atoms])
+            particle.random_ordering({symbol: n_atoms})
             self.emt_calculator.compute_energy(particle)
             self.mixing_parameters[symbol] = particle.get_energy('EMT')
 
@@ -178,7 +178,7 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
             for n_symbol_a_atoms in range(cn_number + 1):
                 E = 0
                 if symbol == symbol_a:
-                    E += (0.1 * global_topological_coefficients[3])
+                    E += (global_topological_coefficients[3]) # careful...
                     E += (n_symbol_a_atoms*E_aa_bond/2)
                     E += ((cn_number - n_symbol_a_atoms)*E_ab_bond/2)
                     E += (coordination_energies[cn_number])
