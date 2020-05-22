@@ -91,4 +91,4 @@ def locate_convex_hull(start_population, unsuccessful_gens_for_convergence, ener
         else:
             gens_since_last_success += 1
 
-    return population, energy_log
+    return [population, energy_log]

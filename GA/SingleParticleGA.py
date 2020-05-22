@@ -33,7 +33,8 @@ def run_single_particle_GA(start_population, unsuccessful_gens_for_convergence, 
     cur_population.sort(key=lambda x: x.get_energy(energy_key))
     best_energies.append((cur_population[0].get_energy(energy_key), energy_evaluations))
     while unsuccessful_gens < unsuccessful_gens_for_convergence:
-        print("Generation: {}".format(generation))
+        if generation % 200 == 0:
+            print("Generation: {}".format(generation))
 
         E_min = cur_population[0].get_energy(energy_key)
         E_max = cur_population[-1].get_energy(energy_key)
@@ -44,11 +45,7 @@ def run_single_particle_GA(start_population, unsuccessful_gens_for_convergence, 
             break
         fitness_values /= np.sum(fitness_values)
 
-        counter = 0
         while True:
-            print("Counter: {}".format(counter))
-            counter += 1
-
             p = np.random.rand()
             if p < 0.4:
                 parent1, parent2 = np.random.choice(cur_population, 2, replace=False, p=fitness_values)
@@ -83,4 +80,4 @@ def run_single_particle_GA(start_population, unsuccessful_gens_for_convergence, 
             best_energies.append((cur_population[0].get_energy(energy_key), energy_evaluations))
             print("New best energy: {}".format(cur_population[0].get_energy(energy_key)))
 
-    return best_energies, cur_population[0], energy_evaluations
+    return [best_energies, cur_population[0].get_as_dictionary(True), energy_evaluations]

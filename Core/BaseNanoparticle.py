@@ -24,14 +24,18 @@ class BaseNanoparticle:
         self.atom_features = dict()
         self.feature_vectors = dict()
 
-    def from_particle_data(self, atoms, neighbor_list=None):
+    def from_particle_data(self, atoms, neighbor_list=None, bounding_box=None):
         self.atoms = atoms
         if neighbor_list is None:
             self.construct_neighbor_list()
         else:
             self.neighbor_list = neighbor_list
 
-        #self.construct_bounding_box()
+        if bounding_box is None:
+            self.construct_bounding_box()
+        else:
+            self.bounding_box = bounding_box
+
 
     def get_as_dictionary(self, thin=False):
         data = dict()

@@ -15,20 +15,23 @@ class GOSearch:
     def fit_energy_expression(self, training_set):
         raise NotImplementedError
 
-    def build_args_list_for_gm_search(self, additional_args):
+    def build_args_list_for_gm_search(self, args_gm, args_start):
         raise NotImplementedError
 
     def build_kwargs_list_for_gm_search(self, additional_kwargs):
         raise NotImplementedError
 
-    def run_multiple_simulations(self, n_runs, additional_args=None, additional_kwargs=None):
+    def run_multiple_simulations(self, n_runs, args_gm=None, kwargs_gm=None, args_start=None):
         run_times = []
         results = []
         for i in range(n_runs):
             print("Run: {}".format(i))
 
+            args = self.build_args_list_for_gm_search(args_gm, args_start)
+            kwargs = self.build_kwargs_list_for_gm_search(kwargs_gm)
+
             start_time = time.perf_counter()
-            result = self.find_global_minimum(*self.build_args_list_for_gm_search(additional_args), **self.build_kwargs_list_for_gm_search(additional_kwargs))
+            result = self.find_global_minimum(*args, **kwargs)
             end_time = time.perf_counter()
 
             run_time = end_time - start_time
@@ -75,8 +78,12 @@ class MCSearch(GOSearch):
 
         return
 
-    def build_args_list_for_gm_search(self, additional_args):
-        start_config = self.create_start_configuration()
+    def build_args_list_for_gm_search(self, additional_args, args_start):
+        if args_start is None:
+            start_config = self.create_start_configuration()
+        else:
+            start_config = self.create_start_configuration(*args_start)
+
         args = [self.beta, self.n_steps, start_config, self.energy_calculator, self.local_feature_classifier]
         if additional_args is not None:
             return args + additional_args
@@ -130,8 +137,8 @@ class GASearch(GOSearch):
 
         return
 
-    def build_args_list_for_gm_search(self, additional_args):
-        start_population = self.create_start_configuration()
+    def build_args_list_for_gm_search(self, additional_args, args_start):
+        start_population = self.create_start_configuration(*args_start)
         args = [start_population, self.unsuccessful_steps_for_convergence, self.energy_calculator, self.local_env_calculator, self.local_feature_classifier]
         if additional_args is not None:
             return args + additional_args

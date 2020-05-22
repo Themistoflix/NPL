@@ -178,7 +178,7 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
             for n_symbol_a_atoms in range(cn_number + 1):
                 E = 0
                 if symbol == symbol_a:
-                    E += (global_topological_coefficients[3]) # careful...
+                    E += (global_topological_coefficients[3]*0.1) # careful...
                     E += (n_symbol_a_atoms*E_aa_bond/2)
                     E += ((cn_number - n_symbol_a_atoms)*E_ab_bond/2)
                     E += (coordination_energies[cn_number])

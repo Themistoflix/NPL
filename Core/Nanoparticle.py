@@ -141,6 +141,8 @@ class Nanoparticle(BaseNanoparticle):
                     transform_n_random_atoms(symbol, 'Z', difference)
 
         for symbol in target_stoichiometry:
+            if symbol == 'Z':
+                continue
             difference = target_stoichiometry[symbol]
             if symbol in self.get_stoichiometry():
                 difference = target_stoichiometry[symbol] - self.get_stoichiometry()[symbol]
