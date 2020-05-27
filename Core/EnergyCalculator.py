@@ -166,6 +166,7 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
     symbols_copy = copy.deepcopy(symbols)
     symbols_copy.sort()
     symbol_a = symbols_copy[0]
+    print("Coef symbol_a: {}".format(symbol_a))
 
     E_aa_bond = global_topological_coefficients[0]/n_atoms
     E_bb_bond = global_topological_coefficients[1]/n_atoms

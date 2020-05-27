@@ -28,7 +28,6 @@ class CutAndSpliceOperator:
         new_particle = NP.Nanoparticle(common_lattice)
         new_particle.from_particle_data(new_atom_data, particle1.neighbor_list, particle1.bounding_box)
 
-        #new_particle.construct_bounding_box()
         if fixed_stoichiometry is True:
             target_stoichiometry = particle1.get_stoichiometry()
             new_particle.adjust_stoichiometry(target_stoichiometry)

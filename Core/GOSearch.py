@@ -72,6 +72,7 @@ class MCSearch(GOSearch):
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
         topological_coefficients = EC.compute_coefficients_for_linear_topological_model2(lin_coef, symbols, n_atoms)
+        print(topological_coefficients)
 
         self.energy_calculator.set_coefficients(topological_coefficients)
         self.energy_calculator.set_feature_key(self.local_feature_classifier.get_feature_key())
@@ -130,7 +131,9 @@ class GASearch(GOSearch):
 
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
+        print(lin_coef)
         topological_coefficients = EC.compute_coefficients_for_linear_topological_model2(lin_coef, symbols, n_atoms)
+        print(topological_coefficients)
 
         self.energy_calculator.set_coefficients(topological_coefficients)
         self.energy_calculator.set_feature_key(self.local_feature_classifier.get_feature_key())
