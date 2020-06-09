@@ -12,7 +12,7 @@ class GOSearch:
         self.find_global_minimum = find_global_minimum
         self.create_start_configuration = create_start_configuration
 
-    def fit_energy_expression(self, training_set):
+    def fit_energy_expression(self, training_set, symbols):
         raise NotImplementedError
 
     def build_args_list_for_gm_search(self, args_gm, args_start):
@@ -55,8 +55,7 @@ class MCSearch(GOSearch):
         self.energy_calculator = None
         self.local_feature_classifier = None
 
-    def fit_energy_expression(self, training_set):
-        symbols = training_set[0].get_symbols()
+    def fit_energy_expression(self, training_set, symbols):
         local_env_calculator = LEC.NeighborCountingEnvironmentCalculator(symbols)
         global_feature_classifier = GFC.TopologicalFeatureClassifier2(symbols)
 
@@ -113,9 +112,7 @@ class GASearch(GOSearch):
         self.energy_calculator = None
         self.local_feature_classifier = None
 
-    def fit_energy_expression(self, training_set):
-        # symbols = training_set[0].get_symbols()
-        symbols = ['Pt', 'Au']
+    def fit_energy_expression(self, training_set, symbols):
         local_env_calculator = LEC.NeighborCountingEnvironmentCalculator(symbols)
         global_feature_classifier = GFC.TopologicalFeatureClassifier2(symbols)
 
@@ -141,8 +138,12 @@ class GASearch(GOSearch):
         return
 
     def build_args_list_for_gm_search(self, additional_args, args_start):
-        start_population = self.create_start_configuration(*args_start)
+        if args_start is None:
+            start_population = self.create_start_configuration()
+        else:
+            start_population = self.create_start_configuration(*args_start)
         args = [start_population, self.unsuccessful_steps_for_convergence, self.energy_calculator, self.local_env_calculator, self.local_feature_classifier]
+
         if additional_args is not None:
             return args + additional_args
         else:

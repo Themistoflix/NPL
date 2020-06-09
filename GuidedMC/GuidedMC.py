@@ -70,6 +70,7 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_
                 if new_E > old_E:
                     start_particle.atoms.swap_atoms(exchanges)
                     best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+                    best_particle['energies'][energy_key] = old_E
                     start_particle.atoms.swap_atoms(exchanges)
                     found_new_solution = False
 
@@ -90,8 +91,8 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_
 
     if found_new_solution is True:
         best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+        best_particle['energies'][energy_key] = old_E
 
-    print(accepted_energies[-1][0])
     accepted_energies.append((accepted_energies[-1][0], steps))
 
     return [accepted_energies, best_particle]
@@ -161,6 +162,7 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
                 if new_E > old_E:
                     start_particle.atoms.swap_atoms(exchanges)
                     best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+                    best_particle['energies'][energy_key] = copy.deepcopy(old_E)
                     start_particle.atoms.swap_atoms(exchanges)
                     found_new_solution = False
 
@@ -181,7 +183,7 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
                 local_env_calculator.compute_local_environment(start_particle, index)
                 local_feature_classifier.compute_atom_feature(start_particle, index)
 
-    print(accepted_energies[-1][0])
+    #best_particle['energies'][energy_key] = lowest_energy
     accepted_energies.append((accepted_energies[-1][0], total_steps))
 
     return [accepted_energies, best_particle]

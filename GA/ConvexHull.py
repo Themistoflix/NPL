@@ -26,12 +26,8 @@ def locate_convex_hull(start_population, unsuccessful_gens_for_convergence, ener
     cur_generation = 0
     while gens_since_last_success < unsuccessful_gens_for_convergence:
         cur_generation += 1
-        print("Current generation: {0}".format(cur_generation))
-        print(" ")
-        print(['-' * 40])
-        print(" ")
 
-        if cur_generation % 200 == 0:
+        if cur_generation % 1000 == 0:
             energy_log.append(population.get_convex_hull())
             pickle.dump(energy_log, open("energy_log.pkl", 'wb'))
 
@@ -40,9 +36,8 @@ def locate_convex_hull(start_population, unsuccessful_gens_for_convergence, ener
         # print("Priority: {0}".format(priority_compositions))
 
         p = np.random.random()
-        if p < 0.4:
+        if p < 0.6:
             # choose two parents for cut and splice
-            print("Cut and Splice")
             parent1, parent2 = population.tournament_selection(2, 5)
             new_particle = cut_and_splice_operator.cut_and_splice(parent1, parent2, False)
 
@@ -51,7 +46,6 @@ def locate_convex_hull(start_population, unsuccessful_gens_for_convergence, ener
 
         elif p < 0.8:
             # random exchange
-            print("random exchange")
             parent = population.random_selection(1)[0]
             new_particle = exchange_operator.random_exchange(parent)
 
@@ -60,7 +54,6 @@ def locate_convex_hull(start_population, unsuccessful_gens_for_convergence, ener
 
         else:
             # random mutation
-            print("random mutation")
             parent = population.gaussian_tournament(1, 5)[0]
             new_particle = mutation_operator.random_mutation(parent)
 
@@ -74,14 +67,15 @@ def locate_convex_hull(start_population, unsuccessful_gens_for_convergence, ener
         local_env_calculator.compute_local_environments(new_particle)
         local_feature_classifier.compute_feature_vector(new_particle)
         energy_calculator.compute_energy(new_particle)
-        print("New Energy: {}".format(new_particle.get_energy('BRR')))
+
 
         # add new offspring to population
         successfull_offspring = False
         niche = population.get_niche(new_particle)
 
         if new_particle.get_energy('BRR') < population[niche].get_energy('BRR'):
-            print("success")
+            print("success in generation: {}".format(cur_generation))
+            print("New Energy: {}".format(new_particle.get_energy('BRR')))
             successfull_offspring = True
             population.add_offspring(new_particle)
 
@@ -91,4 +85,4 @@ def locate_convex_hull(start_population, unsuccessful_gens_for_convergence, ener
         else:
             gens_since_last_success += 1
 
-    return [population, energy_log]
+    return [population, energy_log, cur_generation]

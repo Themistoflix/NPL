@@ -33,9 +33,9 @@ class NichedPopulation(Population):
         return self.population[item]
 
     def compute_fitness(self, particle):
-        #niche = self.get_niche(particle)
+        niche = self.get_niche(particle)
 
-        #return particle.get_energy('BRR') - niche*29.226/79 - (79 - niche)*21.367/79
+        #return particle.get_energy('BRR')
         return 1
 
     def get_niche(self, particle):
@@ -82,6 +82,6 @@ class NichedPopulation(Population):
         return list(self.population.values())
 
     def get_convex_hull(self):
-        return [(niche, self.population[niche].get_energy('BRR') - niche*29.226/79 - (79 - niche)*21.367/79) for niche in range(0, self.n_niches)]
+        return [(niche, self.population[niche].get_energy('BRR')) for niche in range(self.n_niches)]
 
 
