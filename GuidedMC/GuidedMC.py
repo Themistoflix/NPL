@@ -1,7 +1,5 @@
 import numpy as np
 import Core.Profiler
-import pickle
-import time
 import copy
 
 from Core.LocalEnvironmentCalculator import NeighborCountingEnvironmentCalculator
@@ -10,7 +8,7 @@ from GuidedMC.GuidedExchangeOperator import RandomExchangeOperator
 
 
 #@Core.Profiler.profile
-def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_classifier, stochastic=False):
+def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_classifier):
     symbols = start_particle.get_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
     energy_key = energy_calculator.get_energy_key()
@@ -28,15 +26,11 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_
 
     old_E = start_particle.get_energy(energy_key)
     lowest_energy = old_E
-
     found_new_solution = False
     best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
     accepted_energies = [(lowest_energy, 0)]
     for i in range(1, steps + 1):
-        if stochastic is False:
-            exchanges = exchange_operator.guided_exchange(start_particle)
-        else:
-            exchanges = exchange_operator.stochastic_guided_exchange(start_particle)
+        exchanges = exchange_operator.guided_exchange(start_particle)
 
         exchanged_indices = []
         neighborhood = set()
@@ -88,6 +82,13 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_
             for index in neighborhood:
                 local_env_calculator.compute_local_environment(start_particle, index)
                 local_feature_classifier.compute_atom_feature(start_particle, index)
+
+            if found_new_solution:
+                start_particle.atoms.swap_atoms(exchanges)
+                best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+                best_particle['energies'][energy_key] = old_E
+                start_particle.atoms.swap_atoms(exchanges)
+                found_new_solution = False
 
     if found_new_solution is True:
         best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
@@ -182,6 +183,13 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
             for index in neighborhood:
                 local_env_calculator.compute_local_environment(start_particle, index)
                 local_feature_classifier.compute_atom_feature(start_particle, index)
+
+            if found_new_solution:
+                start_particle.atoms.swap_atoms(exchanges)
+                best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+                best_particle['energies'][energy_key] = copy.deepcopy(old_E)
+                start_particle.atoms.swap_atoms(exchanges)
+                found_new_solution = False
 
     #best_particle['energies'][energy_key] = lowest_energy
     accepted_energies.append((accepted_energies[-1][0], total_steps))

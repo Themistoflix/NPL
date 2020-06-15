@@ -48,6 +48,29 @@ class GuidedExchangeOperator:
             particle.atoms.swap_atoms(zip(symbol1_indices, symbol2_indices))
             return list(zip(symbol1_indices, symbol2_indices))
 
+    def basin_hop_step(self, particle):
+        expected_energy_gain = -1
+        self.index = -1
+        while expected_energy_gain <= 0 and self.index < min(self.n_symbol1_atoms, self.n_symbol2_atoms):
+            self.index += 1
+            symbol1_index = self.symbol1_indices[self.index % self.n_symbol1_atoms]
+            symbol1_energy = self.symbol1_exchange_energies[symbol1_index]
+
+            symbol2_index = self.symbol2_indices[self.index % self.n_symbol2_atoms]
+            symbol2_energy = self.symbol2_exchange_energies[symbol2_index]
+
+            expected_energy_gain = symbol1_energy + symbol2_energy
+            if expected_energy_gain > 0:
+                self.index = 0
+                particle.atoms.swap_atoms([(symbol1_index, symbol2_index)])
+                return [(symbol1_index, symbol2_index)]
+
+        symbol1_index = self.symbol1_indices[self.index % self.n_symbol1_atoms]
+        symbol2_index = self.symbol2_indices[self.index % self.n_symbol2_atoms]
+        self.index = 0
+        particle.atoms.swap_atoms([(symbol1_index, symbol2_index)])
+        return [(symbol1_index, symbol2_index)]
+
     def stochastic_guided_exchange(self, particle):
         n_exchanges = min(np.random.geometric(p=self.p_geometric, size=1)[0], self.max_exchanges)
 
