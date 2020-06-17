@@ -6,7 +6,7 @@ from Core.LocalEnvironmentCalculator import NeighborCountingEnvironmentCalculato
 from GuidedMC.GuidedExchangeOperator import GuidedExchangeOperator
 
 
-def run_basin_hopping(beta, steps, start_particle, energy_calculator, local_feature_classifier, n_hopping_attempts, n_hops):
+def run_basin_hopping(start_particle, energy_calculator, local_feature_classifier, total_energies, n_hopping_attempts, n_hops):
     symbols = start_particle.get_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
     energy_key = energy_calculator.get_energy_key()
@@ -19,7 +19,7 @@ def run_basin_hopping(beta, steps, start_particle, energy_calculator, local_feat
 
     local_energies = energy_calculator.get_coefficients()
 
-    exchange_operator = GuidedExchangeOperator(local_energies, 0.5, feature_key)
+    exchange_operator = GuidedExchangeOperator(local_energies, total_energies, feature_key)
     exchange_operator.bind_particle(start_particle)
 
     old_E = start_particle.get_energy(energy_key)
@@ -76,6 +76,7 @@ def run_basin_hopping(beta, steps, start_particle, energy_calculator, local_feat
 
         for hop in range(n_hops):
             exchanges = exchange_operator.basin_hop_step(start_particle)
+            step += 1
 
             exchanged_indices = []
             neighborhood = set()
@@ -104,6 +105,6 @@ def run_basin_hopping(beta, steps, start_particle, energy_calculator, local_feat
             exchange_operator.reset_index()
             exchange_operator.update(start_particle, neighborhood, exchanged_indices)
 
-    accepted_energies.append((accepted_energies[-1][0], steps))
+    accepted_energies.append((accepted_energies[-1][0], step))
 
     return [accepted_energies, best_particle]

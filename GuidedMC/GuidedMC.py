@@ -8,7 +8,7 @@ from GuidedMC.GuidedExchangeOperator import RandomExchangeOperator
 
 
 #@Core.Profiler.profile
-def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_classifier):
+def run_guided_MC(start_particle, energy_calculator, local_feature_classifier, total_energies):
     symbols = start_particle.get_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
     energy_key = energy_calculator.get_energy_key()
@@ -21,16 +21,17 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_
 
     local_energies = energy_calculator.get_coefficients()
 
-    exchange_operator = GuidedExchangeOperator(local_energies, 0.5, feature_key)
+    exchange_operator = GuidedExchangeOperator(local_energies, total_energies, feature_key)
     exchange_operator.bind_particle(start_particle)
 
     old_E = start_particle.get_energy(energy_key)
-    lowest_energy = old_E
-    found_new_solution = False
     best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
-    accepted_energies = [(lowest_energy, 0)]
-    for i in range(1, steps + 1):
+    accepted_energies = [(old_E, 0)]
+
+    step = 0
+    while True:
         exchanges = exchange_operator.guided_exchange(start_particle)
+        step += 1
 
         exchanged_indices = []
         neighborhood = set()
@@ -55,46 +56,22 @@ def run_guided_MC(beta, steps, start_particle, energy_calculator, local_feature_
         energy_calculator.compute_energy(start_particle)
         new_E = start_particle.get_energy(energy_key)
 
+        exchange_operator.reset_index()
+        exchange_operator.update(start_particle, neighborhood, exchanged_indices)
 
-        delta_E = new_E - old_E
-
-        acceptance_rate = min(1, np.exp(-beta * delta_E))
-        if np.random.random() > 1 - acceptance_rate:
-            if found_new_solution:
-                if new_E > old_E:
-                    start_particle.atoms.swap_atoms(exchanges)
-                    best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
-                    best_particle['energies'][energy_key] = old_E
-                    start_particle.atoms.swap_atoms(exchanges)
-                    found_new_solution = False
-
+        if new_E < old_E:
             old_E = new_E
-            exchange_operator.reset_index()
-            accepted_energies.append((new_E, i))
-
-            exchange_operator.update(start_particle, neighborhood, exchanged_indices)
-            if new_E < lowest_energy:
-                found_new_solution = True
-                lowest_energy = new_E
-
+            accepted_energies.append((new_E, step))
         else:
             start_particle.atoms.swap_atoms(exchanges)
-            for index in neighborhood:
-                local_env_calculator.compute_local_environment(start_particle, index)
-                local_feature_classifier.compute_atom_feature(start_particle, index)
+            print('lowest E: {}'.format(old_E))
+            best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+            best_particle['energies'][energy_key] = old_E
 
-            if found_new_solution:
-                start_particle.atoms.swap_atoms(exchanges)
-                best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
-                best_particle['energies'][energy_key] = old_E
-                start_particle.atoms.swap_atoms(exchanges)
-                found_new_solution = False
+            start_particle.atoms.swap_atoms(exchanges)
+            break
 
-    if found_new_solution is True:
-        best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
-        best_particle['energies'][energy_key] = old_E
-
-    accepted_energies.append((accepted_energies[-1][0], steps))
+    accepted_energies.append((accepted_energies[-1][0], step))
 
     return [accepted_energies, best_particle]
 

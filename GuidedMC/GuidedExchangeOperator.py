@@ -3,10 +3,10 @@ from sortedcontainers import SortedKeyList
 
 
 class GuidedExchangeOperator:
-    def __init__(self, local_energies, p_geometric, feature_key, beta=10):
+    def __init__(self, local_energies, total_energies, feature_key):
         self.local_energies = local_energies
         self.n_envs = int(len(local_energies)/2)
-        self.env_energy_differences = [local_energies[i] - local_energies[i + self.n_envs] for i in range(self.n_envs)]
+        self.env_energy_differences = [total_energies[i] - total_energies[i + self.n_envs] for i in range(self.n_envs)]
 
         self.feature_key = feature_key
 
@@ -21,11 +21,10 @@ class GuidedExchangeOperator:
         self.n_symbol2_atoms = 0
 
         self.max_exchanges = 0
-        self.p_geometric = p_geometric
-        self.beta = beta
 
     def env_from_feature(self, x):
         return x % self.n_envs
+
 
     def guided_exchange(self, particle):
         symbol1_index = self.symbol1_indices[self.index % self.n_symbol1_atoms]
@@ -37,16 +36,8 @@ class GuidedExchangeOperator:
         expected_energy_gain = symbol1_energy + symbol2_energy
         self.index += 1
 
-        if expected_energy_gain < 0:
-            particle.atoms.swap_atoms([(symbol1_index, symbol2_index)])
-            return [(symbol1_index, symbol2_index)]
-        else:
-            n_exchanges = min(np.random.geometric(p=self.p_geometric, size=1)[0], self.max_exchanges)
-            symbol1_indices = np.random.choice(self.symbol1_indices, n_exchanges, replace=False)
-            symbol2_indices = np.random.choice(self.symbol2_indices, n_exchanges, replace=False)
-
-            particle.atoms.swap_atoms(zip(symbol1_indices, symbol2_indices))
-            return list(zip(symbol1_indices, symbol2_indices))
+        particle.atoms.swap_atoms([(symbol1_index, symbol2_index)])
+        return [(symbol1_index, symbol2_index)]
 
     def basin_hop_step(self, particle):
         expected_energy_gain = -1

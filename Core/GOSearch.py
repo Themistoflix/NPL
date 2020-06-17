@@ -70,7 +70,7 @@ class MCSearch(GOSearch):
 
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
-        topological_coefficients = EC.compute_coefficients_for_linear_topological_model2(lin_coef, symbols, n_atoms)
+        topological_coefficients, _ = EC.compute_coefficients_for_linear_topological_model2(lin_coef, symbols, n_atoms)
         print(topological_coefficients)
 
         self.energy_calculator.set_coefficients(topological_coefficients)
@@ -129,7 +129,7 @@ class GASearch(GOSearch):
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
         print(lin_coef)
-        topological_coefficients = EC.compute_coefficients_for_linear_topological_model2(lin_coef, symbols, n_atoms)
+        topological_coefficients, _ = EC.compute_coefficients_for_linear_topological_model2(lin_coef, symbols, n_atoms)
         print(topological_coefficients)
 
         self.energy_calculator.set_coefficients(topological_coefficients)
@@ -144,6 +144,53 @@ class GASearch(GOSearch):
             start_population = self.create_start_configuration(*args_start)
         args = [start_population, self.unsuccessful_steps_for_convergence, self.energy_calculator, self.local_env_calculator, self.local_feature_classifier]
 
+        if additional_args is not None:
+            return args + additional_args
+        else:
+            return args
+
+    def build_kwargs_list_for_gm_search(self, additional_kwargs):
+        if additional_kwargs is not None:
+            return additional_kwargs
+        else:
+            return dict()
+
+
+class GuidedSearch(GOSearch):
+    def __init__(self, find_global_minimum, create_start_configuration):
+        GOSearch.__init__(self, find_global_minimum, create_start_configuration)
+        self.total_energies = None
+
+    def fit_energy_expression(self, training_set, symbols):
+        local_env_calculator = LEC.NeighborCountingEnvironmentCalculator(symbols)
+        global_feature_classifier = GFC.TopologicalFeatureClassifier2(symbols)
+
+        self.energy_calculator = EC.BayesianRRCalculator(global_feature_classifier.get_feature_key())
+        self.local_feature_classifier = LFC.TopologicalEnvironmentClassifier2(local_env_calculator, symbols)
+
+        for p in training_set:
+            local_env_calculator.compute_local_environments(p)
+            global_feature_classifier.compute_feature_vector(p)
+
+        self.energy_calculator.fit(training_set, 'EMT')
+
+        n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
+        lin_coef = self.energy_calculator.get_coefficients()
+        topological_coefficients, self.total_energies = EC.compute_coefficients_for_linear_topological_model2(lin_coef, symbols, n_atoms)
+        print(topological_coefficients)
+
+        self.energy_calculator.set_coefficients(topological_coefficients)
+        self.energy_calculator.set_feature_key(self.local_feature_classifier.get_feature_key())
+
+        return
+
+    def build_args_list_for_gm_search(self, additional_args, args_start):
+        if args_start is None:
+            start_config = self.create_start_configuration()
+        else:
+            start_config = self.create_start_configuration(*args_start)
+
+        args = [start_config, self.energy_calculator, self.local_feature_classifier, self.total_energies]
         if additional_args is not None:
             return args + additional_args
         else:
