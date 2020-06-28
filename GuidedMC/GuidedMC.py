@@ -137,12 +137,13 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
         acceptance_rate = min(1, np.exp(-beta * delta_E))
         if np.random.random() > 1 - acceptance_rate:
             if found_new_solution:
+                found_new_solution = False
                 if new_E > old_E:
                     start_particle.atoms.swap_atoms(exchanges)
                     best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
                     best_particle['energies'][energy_key] = copy.deepcopy(old_E)
                     start_particle.atoms.swap_atoms(exchanges)
-                    found_new_solution = False
+
 
             old_E = new_E
             accepted_energies.append((new_E, total_steps))
@@ -153,6 +154,7 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
                 found_new_solution = True
             else:
                 no_improvement += 1
+                found_new_solution = False
 
         else:
             no_improvement += 1
@@ -162,10 +164,8 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
                 local_feature_classifier.compute_atom_feature(start_particle, index)
 
             if found_new_solution:
-                start_particle.atoms.swap_atoms(exchanges)
                 best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
                 best_particle['energies'][energy_key] = copy.deepcopy(old_E)
-                start_particle.atoms.swap_atoms(exchanges)
                 found_new_solution = False
 
     #best_particle['energies'][energy_key] = lowest_energy
