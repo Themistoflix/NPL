@@ -65,6 +65,7 @@ class MCSearch(GOSearch):
         for p in training_set:
             local_env_calculator.compute_local_environments(p)
             global_feature_classifier.compute_feature_vector(p)
+            print(p.get_feature_vector(global_feature_classifier.get_feature_key()))
 
         self.energy_calculator.fit(training_set, 'EMT')
 
