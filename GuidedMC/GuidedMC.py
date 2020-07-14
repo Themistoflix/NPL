@@ -9,7 +9,7 @@ from GuidedMC.GuidedExchangeOperator import RandomExchangeOperator
 
 #@Core.Profiler.profile
 def run_guided_MC(start_particle, energy_calculator, local_feature_classifier, total_energies):
-    symbols = start_particle.get_symbols()
+    symbols = start_particle.get_contributing_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
     energy_key = energy_calculator.get_energy_key()
 
@@ -78,7 +78,7 @@ def run_guided_MC(start_particle, energy_calculator, local_feature_classifier, t
 
 #@Core.Profiler.profile
 def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feature_classifier):
-    symbols = start_particle.get_symbols()
+    symbols = start_particle.get_contributing_symbols()
 
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
 
@@ -135,12 +135,12 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
         delta_E = new_E - old_E
 
         acceptance_rate = min(1, np.exp(-beta * delta_E))
-        if np.random.random() > 1 - acceptance_rate:
+        if np.random.random() < acceptance_rate:
             if found_new_solution:
                 found_new_solution = False
                 if new_E > old_E:
                     start_particle.atoms.swap_atoms(exchanges)
-                    best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+                    best_particle = copy.deepcopy(start_particle.get_as_dictionary(False))
                     best_particle['energies'][energy_key] = copy.deepcopy(old_E)
                     start_particle.atoms.swap_atoms(exchanges)
 
@@ -166,11 +166,11 @@ def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feat
                 local_feature_classifier.compute_atom_feature(start_particle, index)
 
             if found_new_solution:
-                best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+                best_particle = copy.deepcopy(start_particle.get_as_dictionary(False))
                 best_particle['energies'][energy_key] = copy.deepcopy(old_E)
                 found_new_solution = False
 
     #best_particle['energies'][energy_key] = lowest_energy
     accepted_energies.append((accepted_energies[-1][0], total_steps))
 
-    return [accepted_energies, best_particle, start_particle.get_as_dictionary(True)]
+    return [accepted_energies, best_particle, start_particle.get_as_dictionary(False)]

@@ -10,7 +10,7 @@ class MutationOperator:
     def random_mutation(self, particle, n_mutations=None, symbols=None):
         new_particle = copy.deepcopy(particle)
         if new_particle.is_pure():
-            symbol_from = new_particle.atoms.get_symbols()[0]
+            symbol_from = new_particle.atoms.get_contributing_symbols()[0]
             print(symbol_from)
             other_symbols = list(self.symbols.difference({symbol_from}))
             print(other_symbols)
@@ -18,7 +18,7 @@ class MutationOperator:
             print(symbol_to)
         else:
             if symbols is None:
-                symbols = np.random.choice(new_particle.atoms.get_symbols(), 2, replace=False)
+                symbols = np.random.choice(new_particle.atoms.get_contributing_symbols(), 2, replace=False)
                 symbol_from = symbols[0]
                 symbol_to = symbols[1]
             else:
@@ -31,7 +31,7 @@ class MutationOperator:
 
         atom_indices_to_be_transformed = np.random.choice(new_particle.atoms.get_indices_by_symbol(symbol_from), n_mutations, replace=False)
 
-        new_particle.atoms.transform_atoms(zip(atom_indices_to_be_transformed, [symbol_to] * n_mutations))
+        new_particle.atoms.transform_atoms(zip(atom_indices_to_be_transformed, [symbol_to] * n_mutations), a)
 
         return new_particle
 

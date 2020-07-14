@@ -1,19 +1,17 @@
 import numpy as np
 
 from Core.BaseNanoparticle import BaseNanoparticle
-from ase import Atoms
+from Core.IndexedAtoms import Atom
+from Core import Profiler
 
 
 class Nanoparticle(BaseNanoparticle):
     def __init__(self, lattice):
         BaseNanoparticle.__init__(self, lattice)
 
-    def truncated_octahedron(self, height, trunc, stoichiometry):
-        bounding_box_anchor = self.lattice.get_anchor_index_of_centered_box(2 * height, 2 * height, 2 * height)
+    def truncated_octahedron(self, height, trunc, stoichiometry, scale_factor):
+        bounding_box_anchor = [0, 0, 0]
         lower_tip_position = bounding_box_anchor + np.array([height, height, 0])
-
-        if not self.lattice.is_valid_lattice_position(lower_tip_position):
-            lower_tip_position[2] = lower_tip_position[2] + 1
 
         layer_basis_vector1 = np.array([1, 1, 0])
         layer_basis_vector2 = np.array([-1, 1, 0])
@@ -45,10 +43,15 @@ class Nanoparticle(BaseNanoparticle):
                     current_position_lower_layer = lower_layer_start_position + x_position * layer_basis_vector1 + y_position * layer_basis_vector2
                     current_position_upper_layer = upper_layer_start_position + x_position * layer_basis_vector1 + y_position * layer_basis_vector2
 
-                    lower_layer_index = self.lattice.get_index_from_lattice_position(current_position_lower_layer)
-                    upper_layer_index = self.lattice.get_index_from_lattice_position(current_position_upper_layer)
+                    current_position_lower_layer = scale_factor*current_position_lower_layer
+                    current_position_upper_layer = scale_factor*current_position_upper_layer
 
-                    self.atoms.add_atoms([(lower_layer_index, 'Pt'), (upper_layer_index, 'Au')])
+                    lower_atom = Atom('Pt', current_position_lower_layer)
+                    upper_atom = Atom('Au', current_position_upper_layer)
+                    if z_position == height - 1:
+                        self.atoms.add_atoms([lower_atom])
+                    else:
+                        self.atoms.add_atoms([upper_atom, lower_atom])
 
         self.construct_neighbor_list()
 
@@ -64,75 +67,11 @@ class Nanoparticle(BaseNanoparticle):
         else:
             self.random_ordering(stoichiometry)
 
-    def get_ASE_atoms(self, centered=True, exclude_X=True):
-        atom_positions = list()
-        atomic_symbols = list()
-        for lattice_index in self.atoms.get_indices():
-            if exclude_X is True:
-                if self.atoms.get_symbol(lattice_index) is 'X':
-                    continue
-            atom_positions.append(self.lattice.get_cartesian_position_from_index(lattice_index))
-            atomic_symbols.append(self.atoms.get_symbol(lattice_index))
-
-        atoms = Atoms(positions=atom_positions, symbols=atomic_symbols)
-        if centered:
-            COM = atoms.get_center_of_mass()
-            return Atoms(positions=[position - COM for position in atom_positions], symbols=atomic_symbols)
-        else:
-            return atoms
-
-    def surface_ordering(self, base_symbol, surface_stoichiometry):
-        surface_indices = self.get_atom_indices_from_coordination_number(list(range(12)))
-        inner_indices = self.get_inner_atom_indices()
-        print(len(surface_indices))
-        print(len(inner_indices))
-
-        transformed_stoichiometry = dict()
-        if sum(list(surface_stoichiometry.values())) <= 1:
-            n_atoms = len(surface_indices)
-            print("N surface atoms: {0}".format(n_atoms))
-            for symbol in surface_stoichiometry:
-                transformed_stoichiometry[symbol] = int(surface_stoichiometry[symbol]*n_atoms)
-            if sum(list(transformed_stoichiometry.values())) != n_atoms:
-                difference = n_atoms - sum(list(transformed_stoichiometry.values()))
-                transformed_stoichiometry[list(transformed_stoichiometry.keys())[0]] += difference
-
-            symbols = [symbol for symbol in transformed_stoichiometry for i in range(transformed_stoichiometry[symbol])]
-            np.random.shuffle(surface_indices)
-            self.atoms.transform_atoms(zip(surface_indices, symbols))
-
-        else:
-            symbols = [symbol for symbol in surface_stoichiometry for i in range(surface_stoichiometry[symbol])]
-            np.random.shuffle(surface_indices)
-            self.atoms.transform_atoms(zip(surface_indices, symbols))
-
-        self.atoms.transform_atoms(zip(inner_indices, [base_symbol]*len(inner_indices)))
-
-    def coat(self):
-        surface_vacancies = self.get_surface_vacancies()
-        self.add_atoms(list(zip(surface_vacancies, ['X']*len(surface_vacancies))))
-
-    def enforce_atom_number(self, n_atoms, fill_symbol):
-        n_atoms_self = self.get_n_atoms(include_X=False)
-
-        if n_atoms_self > n_atoms:
-            #transform random into X
-            diff = n_atoms_self - n_atoms
-            indices_to_be_removed = np.random.choice(self.get_atom_indices_from_coordination_number(range(11)), diff, False)
-            self.transform_atoms(list(zip(indices_to_be_removed, ['X']*diff)))
-
-        elif n_atoms_self < n_atoms:
-            diff = n_atoms - n_atoms_self
-            surface_vacancies = list(self.get_surface_vacancies())
-
-            indices_to_be_added = np.random.choice(surface_vacancies, diff, False)
-            self.add_atoms(list(zip(indices_to_be_added, [fill_symbol]*diff)))
-
     def adjust_stoichiometry(self, target_stoichiometry):
         def transform_n_random_atoms(symbol_from, symbol_to, n_atoms):
             symbol_from_atoms = self.get_indices_by_symbol(symbol_from)
             atoms_to_be_transformed = np.random.choice(symbol_from_atoms, n_atoms, replace=False)
-            self.transform_atoms(zip(atoms_to_be_transformed, [symbol_to] * n_atoms))
+            self.transform_atoms(zip(atoms_to_be_transformed, [symbol_to] * n_atoms), a)
 
         for symbol in self.get_stoichiometry():
             if symbol in target_stoichiometry:

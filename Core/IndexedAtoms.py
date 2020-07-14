@@ -1,47 +1,78 @@
 import numpy as np
 from collections import defaultdict
 
+
+class Atom:
+    def __init__(self, symbol, position):
+        self.symbol = symbol
+        self.position = position
+
+    def get_symbol(self):
+        return self.symbol
+
+    def get_position(self):
+        return self.position
+
+    def set_symbol(self, symbol):
+        self.symbol = symbol
+
+    def set_position(self, position):
+        self.position = position
+
+
 class IndexedAtoms:
     def __init__(self):
-        self.symbol_by_index = dict()
+        self.atoms_by_index = dict()
         self.indices_by_symbol = defaultdict(lambda: [])
+
+        self.max_index = 0
+
+    def get_next_index(self):
+        next_index = self.max_index
+        self.max_index += 1
+
+        return next_index
 
     def add_atoms(self, atoms):
         for atom in atoms:
-            index = atom[0]
-            symbol = atom[1]
+            index = self.get_next_index()
+            symbol = atom.get_symbol()
 
-            self.symbol_by_index[index] = symbol
+            self.atoms_by_index[index] = atom
             self.indices_by_symbol[symbol].append(index)
 
     def remove_atoms(self, indices):
         for index in indices:
-            symbol = self.symbol_by_index[index]
+            symbol = self.atoms_by_index[index].get_symbol()
 
-            self.symbol_by_index.pop(index)
+            self.atoms_by_index.pop(index)
             self.indices_by_symbol[symbol].remove(index)
 
     def get_atoms(self, indices=None):
         if indices is None:
             indices = self.get_indices()
-        symbols = [self.symbol_by_index[index] for index in indices]
+        atoms = [self.atoms_by_index[index] for index in indices]
 
-        return list(zip(indices, symbols))
+        return atoms
 
     def clear(self):
-        self.symbol_by_index.clear()
+        self.atoms_by_index.clear()
         self.indices_by_symbol.clear()
+        self.max_index = 0
 
     def swap_atoms(self, pairs):
         for pair in pairs:
             index1 = pair[0]
             index2 = pair[1]
 
-            symbol1 = self.symbol_by_index[index1]
-            symbol2 = self.symbol_by_index[index2]
+            atom1 = self.atoms_by_index[index1]
+            atom2 = self.atoms_by_index[index2]
 
-            self.symbol_by_index[index1] = symbol2
-            self.symbol_by_index[index2] = symbol1
+            symbol1 = atom1.get_symbol()
+            symbol2 = atom2.get_symbol()
+
+            atom1.set_symbol(symbol2)
+            atom2.set_symbol(symbol1)
 
             self.indices_by_symbol[symbol1].remove(index1)
             self.indices_by_symbol[symbol2].append(index1)
@@ -58,31 +89,23 @@ class IndexedAtoms:
         np.random.shuffle(new_ordering)
 
         self.indices_by_symbol.clear()
-
-        for symbol_index, atom_index in enumerate(self.symbol_by_index):
+        for symbol_index, atom_index in enumerate(self.atoms_by_index):
             new_symbol = new_ordering[symbol_index]
-            self.symbol_by_index[atom_index] = new_symbol
-            if new_symbol in self.indices_by_symbol:
-                self.indices_by_symbol[new_symbol].append(atom_index)
-            else:
-                same_symbol_atoms = list()
-                same_symbol_atoms.append(atom_index)
-                self.indices_by_symbol[new_symbol] = same_symbol_atoms
+            self.atoms_by_index[atom_index].set_symbol(new_symbol)
+            self.indices_by_symbol[new_symbol].append(atom_index)
 
-    def transform_atoms(self, new_atoms):
-        for atom in new_atoms:
-            index = atom[0]
-            newSymbol = atom[1]
-            oldSymbol = self.symbol_by_index[index]
+    def transform_atoms(self, atom_indices, new_symbols):
+        for atom_index, new_symbol in zip(atom_indices, new_symbols):
+            old_symbol = self.atoms_by_index[atom_index].get_symbol()
 
-            self.symbol_by_index[index] = newSymbol
-            self.indices_by_symbol[oldSymbol].remove(index)
-            self.indices_by_symbol[newSymbol].append(index)
+            self.atoms_by_index[atom_index].set_symbol(new_symbol)
+            self.indices_by_symbol[old_symbol].remove(atom_index)
+            self.indices_by_symbol[new_symbol].append(atom_index)
 
     def get_indices(self):
-        return list(self.symbol_by_index)
+        return sorted(list(self.atoms_by_index))
 
-    def get_symbols(self):
+    def get_contributing_symbols(self):
         symbols = list()
         for symbol in self.indices_by_symbol:
             if not self.indices_by_symbol[symbol] is []:
@@ -90,8 +113,13 @@ class IndexedAtoms:
 
         return symbols
 
+    def get_symbols(self, indices=None):
+        if indices is None:
+            indices = self.get_indices()
+        return [self.atoms_by_index[index].get_symbol() for index in indices]
+
     def get_symbol(self, index):
-        return self.symbol_by_index[index]
+        return self.atoms_by_index[index].get_symbol()
 
     def get_indices_by_symbol(self, symbol):
         if symbol in self.indices_by_symbol.keys():
@@ -99,15 +127,8 @@ class IndexedAtoms:
         else:
             return []
 
-    def get_n_atoms(self, include_X=True):
-        if include_X:
-            return len(self.symbol_by_index)
-        else:
-            n_atoms = 0
-            for symbol in self.get_symbols():
-                if symbol != 'X':
-                    n_atoms += self.get_n_atoms_of_symbol(symbol)
-            return n_atoms
+    def get_n_atoms(self):
+        return len(self.atoms_by_index)
 
     def get_n_atoms_of_symbol(self, symbol):
         if symbol in self.indices_by_symbol.keys():
@@ -121,3 +142,8 @@ class IndexedAtoms:
             stoichiometry[symbol] = len(self.indices_by_symbol[symbol])
 
         return stoichiometry
+
+    def get_positions(self, indices=None):
+        if indices is None:
+            indices = self.get_indices()
+        return [self.atoms_by_index[index].get_position() for index in indices]

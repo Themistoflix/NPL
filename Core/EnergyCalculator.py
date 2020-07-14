@@ -27,9 +27,13 @@ class EMTCalculator(EnergyCalculator):
         self.energy_key = 'EMT'
 
     def compute_energy(self, particle, return_optimized_atoms=False):
-        cell_width = particle.lattice.width * particle.lattice.lattice_constant
-        cell_length = particle.lattice.length * particle.lattice.lattice_constant
-        cell_height = particle.lattice.height * particle.lattice.lattice_constant
+        #cell_width = particle.lattice.width * particle.lattice.lattice_constant
+        #cell_length = particle.lattice.length * particle.lattice.lattice_constant
+        #cell_height = particle.lattice.height * particle.lattice.lattice_constant
+
+        cell_width = 1e3
+        cell_height = 1e3
+        cell_length = 1e3
 
         atoms = particle.get_ASE_atoms()
         atoms.set_cell(np.array([[cell_width, 0, 0], [0, cell_length, 0], [0, 0, cell_height]]))

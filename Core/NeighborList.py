@@ -1,7 +1,14 @@
+#from ase.neighborlist import NeighborList as ASENeighborList
+from ase.neighborlist import natural_cutoffs
+from ase.neighborlist import build_neighbor_list
+from ase.neighborlist import NewPrimitiveNeighborList
+from ase import Atoms
+import numpy as np
+
+
 class NeighborList:
-    def __init__(self, lattice):
+    def __init__(self):
         self.list = dict()
-        self.lattice = lattice
 
     def __getitem__(self, item):
         return self.list[item]
@@ -9,37 +16,27 @@ class NeighborList:
     def __setitem__(self, key, value):
         self.list[key] = value
 
-    def construct(self, lattice_indices):
-        for lattice_index in lattice_indices:
-            nearest_lattice_neighbors = self.lattice.get_nearest_neighbors(lattice_index)
-            nearest_neighbors = set()
-            for neighbor in nearest_lattice_neighbors:
-                if neighbor in lattice_indices:
-                    nearest_neighbors.add(neighbor)
+    def construct(self, indexed_atoms):
+        sorted_atom_indices = sorted([index for index in indexed_atoms.atoms_by_index])
 
-            self.list[lattice_index] = nearest_neighbors
+        positions = []
+        symbols = []
+        for atom_index in sorted_atom_indices:
+            atom = indexed_atoms.atoms_by_index[atom_index]
+            positions.append(atom.get_position())
+            symbols.append(atom.get_symbol())
 
-    def add_atoms(self, lattice_indices):
-        all_atoms = list(self.list.keys()) + lattice_indices
+        atoms = Atoms(positions=positions, symbols=symbols)
+        neighbor_list = build_neighbor_list(atoms, cutoffs=natural_cutoffs(atoms), bothways=True, self_interaction=False)
 
-        for lattice_index in lattice_indices:
-            nearest_neighbors = set()
-            nearest_lattice_neighbors = self.lattice.get_nearest_neighbors(lattice_index)
-            for neighbor in nearest_lattice_neighbors:
-                if neighbor in all_atoms:
-                    nearest_neighbors.add(neighbor)
-                    if neighbor in self.list:
-                        self.list[neighbor].add(lattice_index)
 
-            self.list[lattice_index] = nearest_neighbors
+        for i in range(len(sorted_atom_indices)):
+            neighbors, _ = neighbor_list.get_neighbors(i)
+            self.list[sorted_atom_indices[i]] = set(neighbors)
 
-    def remove_atoms(self, lattice_indices):
-        for lattice_index in lattice_indices:
-            neighbors = self.list[lattice_index]
-            for neighbor in neighbors:
-                self.list[neighbor].remove(lattice_index)
+    def get_coordination_number(self, atom_index):
+        return len(self.list[atom_index])
 
-            del self.list[lattice_index]
-
-    def get_coordination_number(self, lattice_index):
-        return len(self.list[lattice_index])
+    def get_n_bonds(self):
+        n_bonds = sum([len(l) for l in list(self.list.values())])
+        return n_bonds/2

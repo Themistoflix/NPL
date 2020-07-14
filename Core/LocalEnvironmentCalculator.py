@@ -58,7 +58,7 @@ class SOAPCalculator(LocalEnvironmentCalculator):
             # The density of each species is expanded separately
             expansion_coefficients = []
             n_neighbors = len(symbols)
-            for symbol in sorted(particle.get_symbols()):
+            for symbol in sorted(particle.get_contributing_symbols()):
                 symbol_density = np.zeros(n_neighbors)
                 symbol_density[np.where(symbols == symbol)] += 1
                 c_lms_symbol = []
@@ -73,8 +73,8 @@ class SOAPCalculator(LocalEnvironmentCalculator):
 
         sh_expansion_coefficients = spherical_harmonics_expansion()
         bond_parameters = []
-        for symbol_index_1, symbol_1 in enumerate(sorted(particle.get_symbols())):
-            for symbol_index_2, symbol_2 in enumerate(sorted(particle.get_symbols())):
+        for symbol_index_1, symbol_1 in enumerate(sorted(particle.get_contributing_symbols())):
+            for symbol_index_2, symbol_2 in enumerate(sorted(particle.get_contributing_symbols())):
                 n_neighbors_with_symbol_1 = max(1, len(
                     list(filter(lambda x: particle.get_symbol(x) == symbol_1, particle.get_atomic_neighbors(lattice_index)))))
                 n_neighbors_with_symbol_2 = max(1, len(

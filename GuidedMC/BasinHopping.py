@@ -7,7 +7,7 @@ from GuidedMC.GuidedExchangeOperator import GuidedExchangeOperator
 
 
 def run_basin_hopping(start_particle, energy_calculator, local_feature_classifier, total_energies, n_hopping_attempts, n_hops):
-    symbols = start_particle.get_symbols()
+    symbols = start_particle.get_contributing_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
     energy_key = energy_calculator.get_energy_key()
 
@@ -68,7 +68,7 @@ def run_basin_hopping(start_particle, energy_calculator, local_feature_classifie
                     start_particle.atoms.swap_atoms(exchanges)
                     print('lowest E so far: {}, now: {}'.format(lowest_E, old_E))
                     lowest_E = old_E
-                    best_particle = copy.deepcopy(start_particle.get_as_dictionary(True))
+                    best_particle = copy.deepcopy(start_particle.get_as_dictionary())
                     best_particle['energies'][energy_key] = old_E
 
                     start_particle.atoms.swap_atoms(exchanges)
