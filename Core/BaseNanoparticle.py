@@ -125,6 +125,20 @@ class BaseNanoparticle:
     def transform_atoms(self, new_atoms, new_symbols):
         self.atoms.transform_atoms(new_atoms, new_symbols)
 
+    def random_ordering(self, stoichiometry):
+        if sum(list(stoichiometry.values())) <= 1.0:
+            n_atoms = self.get_n_atoms()
+
+            symbols = list(stoichiometry.keys())
+            sum_atoms = 0
+            for symbol in symbols[:-1]:
+                stoichiometry[symbol] = int(n_atoms*stoichiometry[symbol])
+                sum_atoms += stoichiometry[symbol]
+            stoichiometry[symbols[-1]] = n_atoms - sum_atoms
+
+        print(stoichiometry)
+        self.atoms.random_ordering(stoichiometry)
+
     def get_indices(self):
         return self.atoms.get_indices()
 
@@ -139,9 +153,6 @@ class BaseNanoparticle:
 
     def get_indices_by_symbol(self, symbol):
         return self.atoms.get_indices_by_symbol(symbol)
-
-    def random_ordering(self, stoichiometry):
-        self.atoms.random_ordering(stoichiometry)
 
     def construct_neighbor_list(self):
         self.neighbor_list.construct(self.atoms)

@@ -133,40 +133,7 @@ class BayesianRRCalculator(EnergyCalculator):
 
 
 def compute_coefficients_for_linear_topological_model(global_topological_coefficients, symbols, n_atoms):
-    coordination_numbers = [6, 7, 9, 12]
-    symbols_copy = copy.deepcopy(symbols)
-    symbols_copy.sort()
-    symbol_a = symbols_copy[0]
-
-    E_aa_bond = global_topological_coefficients[0]/n_atoms
-    E_bb_bond = global_topological_coefficients[1]/n_atoms
-    E_ab_bond = global_topological_coefficients[2]/n_atoms
-    coordination_energies = {6: global_topological_coefficients[4], 7: global_topological_coefficients[5], 9: global_topological_coefficients[6], 12: 0}
-
-    coefficients = []
-    for symbol in symbols_copy:
-        for cn_number in coordination_numbers:
-            for n_symbol_a_atoms in range(cn_number + 1):
-                E = 0
-                if symbol == symbol_a:
-                    E += 0.1 * global_topological_coefficients[3]
-                    E += (n_symbol_a_atoms*E_aa_bond/2)
-                    E += ((cn_number - n_symbol_a_atoms)*E_ab_bond/2)
-                    E += (coordination_energies[cn_number])
-                else:
-
-                    E += (n_symbol_a_atoms*E_ab_bond/2)
-                    E += ((cn_number - n_symbol_a_atoms)*E_bb_bond/2)
-
-                coefficients.append(E)
-
-    coefficients = np.array(coefficients)
-
-    return coefficients
-
-
-def compute_coefficients_for_linear_topological_model2(global_topological_coefficients, symbols, n_atoms):
-    coordination_numbers = [6, 7, 8, 9, 12]
+    coordination_numbers = list(range(13))
     symbols_copy = copy.deepcopy(symbols)
     symbols_copy.sort()
     symbol_a = symbols_copy[0]
@@ -175,7 +142,6 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
     E_aa_bond = global_topological_coefficients[0]/n_atoms
     E_bb_bond = global_topological_coefficients[1]/n_atoms
     E_ab_bond = global_topological_coefficients[2]/n_atoms
-    coordination_energies = {6: global_topological_coefficients[4], 7: global_topological_coefficients[5], 8: global_topological_coefficients[6], 9:global_topological_coefficients[7], 12: 0}
 
     coefficients = []
     total_energies = []
@@ -188,7 +154,7 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
                     E += (global_topological_coefficients[3]*0.1) # careful...
                     E += (n_symbol_a_atoms*E_aa_bond/2)
                     E += ((cn_number - n_symbol_a_atoms)*E_ab_bond/2)
-                    E += (coordination_energies[cn_number])
+                    E += (global_topological_coefficients[4 + cn_number])
 
                     E_tot = E
                     E_tot += n_symbol_a_atoms*E_aa_bond/2
@@ -208,7 +174,8 @@ def compute_coefficients_for_linear_topological_model2(global_topological_coeffi
 
     return coefficients, total_energies
 
-def compute_coefficients_for_linear_topological_model3(global_topological_coefficients, symbols, n_atoms):
+
+def compute_coefficients_for_shape_optimization(global_topological_coefficients, symbols, n_atoms):
     coordination_numbers = list(range(13))
     symbols_copy = copy.deepcopy(symbols)
     symbols_copy.sort()
@@ -221,14 +188,20 @@ def compute_coefficients_for_linear_topological_model3(global_topological_coeffi
         coordination_energies_a[cn] = global_topological_coefficients[index + 1]
 
     coefficients = []
+    total_energies = []
     for symbol in symbols_copy:
         for n_symbol_a_atoms in coordination_numbers:
             E = 0
+            E_tot = 0
             if symbol == symbol_a:
                 E += (n_symbol_a_atoms*E_aa_bond/2)
                 E += (coordination_energies_a[n_symbol_a_atoms])
+
+                E_tot += n_symbol_a_atoms*E_aa_bond/2
                 coefficients.append(E)
+                total_energies.append(E_tot)
     coefficients += [0]*len(coordination_numbers)
+    total_energies += [0]*len(coordination_numbers)
 
     coefficients = np.array(coefficients)
 
