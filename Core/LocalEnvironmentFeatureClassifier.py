@@ -77,7 +77,8 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
         print("Starting kMeans")
         self.kMeans = KMeans(n_clusters=self.n_cluster, random_state=0).fit(local_environments)
 
-class TopologicalEnvironmentClassifier2(LocalEnvironmentFeatureClassifier):
+
+class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
     def __init__(self, local_environment_calculator, symbols):
         LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
         symbols_copy = copy.deepcopy(symbols)

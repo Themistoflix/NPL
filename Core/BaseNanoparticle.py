@@ -29,7 +29,8 @@ class BaseNanoparticle:
 
         return data
 
-    def get_as_dictionary(self, thin=False):
+    def get_as_dictionary(self, thin=False, return_atom_features=False, return_local_environments=False, return_neighbor_list=False,
+                          return_feature_vectors=False, return_positions=False):
         data = dict()
         data['energies'] = self.energies
         data['symbols'] = self.atoms.get_symbols()
@@ -41,6 +42,17 @@ class BaseNanoparticle:
             data['feature_vectors'] = self.feature_vectors
 
             data['positions'] = self.atoms.get_positions()
+        else:
+            if return_atom_features:
+                data['atom_features'] = self.atom_features
+            if return_local_environments:
+                data['local_environments'] = self.local_environments
+            if return_neighbor_list:
+                data['neighbor_list'] = self.neighbor_list.list
+            if return_feature_vectors:
+                data['feature_vectors'] = self.feature_vectors
+            if return_positions:
+                data['positions'] = self.atoms.get_positions()
 
         return data
 
@@ -99,7 +111,7 @@ class BaseNanoparticle:
 
     def load_xyz(self, filename, scale_factor=1.0, construct_neighbor_list=True):
         with open(filename) as file:
-            for line in file.readlines():
+            for line in file.readlines()[2:]:
                 s = line.split(' ')
                 s = [f for f in s if f != '']
                 symbol = s[0]
@@ -136,7 +148,6 @@ class BaseNanoparticle:
                 sum_atoms += stoichiometry[symbol]
             stoichiometry[symbols[-1]] = n_atoms - sum_atoms
 
-        print(stoichiometry)
         self.atoms.random_ordering(stoichiometry)
 
     def get_indices(self):
