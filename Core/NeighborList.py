@@ -1,9 +1,6 @@
-#from ase.neighborlist import NeighborList as ASENeighborList
 from ase.neighborlist import natural_cutoffs
 from ase.neighborlist import build_neighbor_list
-from ase.neighborlist import NewPrimitiveNeighborList
 from ase import Atoms
-import numpy as np
 
 
 class NeighborList:
@@ -28,7 +25,6 @@ class NeighborList:
 
         atoms = Atoms(positions=positions, symbols=symbols)
         neighbor_list = build_neighbor_list(atoms, cutoffs=natural_cutoffs(atoms), bothways=True, self_interaction=False)
-
 
         for i in range(len(sorted_atom_indices)):
             neighbors, _ = neighbor_list.get_neighbors(i)

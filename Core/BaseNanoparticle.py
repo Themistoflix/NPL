@@ -248,6 +248,7 @@ class BaseNanoparticle:
         return self.local_environments
 
     def is_pure(self):
+        #TODO can be done much simpler
         first_symbol = True
         for symbol in self.atoms.get_contributing_symbols():
             if self.atoms.get_n_atoms_of_symbol(symbol) > 0:

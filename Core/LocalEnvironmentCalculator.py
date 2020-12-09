@@ -46,11 +46,11 @@ class SOAPCalculator(LocalEnvironmentCalculator):
             in an fcc lattice and returns the spherical harmonic coefficients of the expansion
             """
 
-            neighbors = particle.get_atomic_neighbors(lattice_index)
+            neighbors = list(particle.neighbor_list[lattice_index])
             symbols = np.array([particle.get_symbol(index) for index in neighbors])
-            cartesian_coordinates = [particle.lattice.get_cartesian_position_from_index(index) for index in neighbors]
+            cartesian_coordinates = particle.atoms.get_positions(neighbors)
 
-            center_atom_position = particle.lattice.get_cartesian_position_from_index(lattice_index)
+            center_atom_position = particle.atoms.get_positions([lattice_index])[0]
             cartesian_coordinates = list(map(lambda x: x - center_atom_position, cartesian_coordinates))
 
             angular_coordinates = map_onto_unit_sphere(cartesian_coordinates)
@@ -75,19 +75,14 @@ class SOAPCalculator(LocalEnvironmentCalculator):
         bond_parameters = []
         for symbol_index_1, symbol_1 in enumerate(sorted(particle.get_contributing_symbols())):
             for symbol_index_2, symbol_2 in enumerate(sorted(particle.get_contributing_symbols())):
-                n_neighbors_with_symbol_1 = max(1, len(
-                    list(filter(lambda x: particle.get_symbol(x) == symbol_1, particle.get_atomic_neighbors(lattice_index)))))
-                n_neighbors_with_symbol_2 = max(1, len(
-                    list(filter(lambda x: particle.get_symbol(x) == symbol_2,
-                                particle.get_atomic_neighbors(lattice_index)))))
                 q_ls_symbol = []
                 i = 0
                 for l in range(self.l_max + 1):
                     q_l = 0
                     for m in range(-l, l + 1):
-                        q_l += 1.0 / (n_neighbors_with_symbol_1 * n_neighbors_with_symbol_2) * np.conj(sh_expansion_coefficients[symbol_index_1][i]) * sh_expansion_coefficients[symbol_index_2][i]
+                        q_l += np.conj(sh_expansion_coefficients[symbol_index_1][i]) * sh_expansion_coefficients[symbol_index_2][i]
                         i += 1
-                    q_ls_symbol.append(np.sqrt((np.sqrt(4.0 * np.pi) / (2. * l + 1.)) * q_l))
+                    q_ls_symbol.append(np.pi*np.sqrt(8.0/(2*l + 1)*q_l))
                 bond_parameters.append(q_ls_symbol)
 
         bond_parameters = np.array(bond_parameters)
@@ -110,8 +105,7 @@ class NeighborCountingEnvironmentCalculator(LocalEnvironmentCalculator):
         n_a_atoms = 0
         n_b_atoms = 0
 
-        neighbor_list = particle.neighbor_list
-        neighbors = neighbor_list[lattice_index]
+        neighbors = particle.neighbor_list[lattice_index]
         for neighbor in neighbors:
             if particle.get_symbol(neighbor) == self.symbol_a:
                 n_a_atoms += 1

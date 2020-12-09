@@ -16,7 +16,7 @@ class EnergyCalculator:
         raise NotImplementedError
 
     def get_energy_key(self):
-        return self.energy_key
+        return copy.deepcopy(self.energy_key)
 
 
 class EMTCalculator(EnergyCalculator):
@@ -75,7 +75,7 @@ class GPRCalculator(EnergyCalculator):
 
 
 class MixingEnergyCalculator(EnergyCalculator):
-    def __init__(self, mixing_parameters=None, fmax=0.05, steps=20):
+    def __init__(self, mixing_parameters=None, fmax=0.05, steps=20, recompute_emt_energy=False):
         EnergyCalculator.__init__(self)
 
         if mixing_parameters is None:
@@ -84,6 +84,7 @@ class MixingEnergyCalculator(EnergyCalculator):
             self.mixing_parameters = mixing_parameters
 
         self.emt_calculator = EMTCalculator(fmax=fmax, steps=steps)
+        self.recompute_emt_energy = recompute_emt_energy
         self.energy_key = 'Mixing Energy'
 
     def compute_mixing_parameters(self, particle, symbols):
@@ -94,7 +95,8 @@ class MixingEnergyCalculator(EnergyCalculator):
             self.mixing_parameters[symbol] = particle.get_energy('EMT')
 
     def compute_energy(self, particle):
-        self.emt_calculator.compute_energy(particle)
+        if self.recompute_emt_energy:
+            self.emt_calculator.compute_energy(particle)
         mixing_energy = particle.get_energy('EMT')
         n_atoms = particle.atoms.get_n_atoms()
 
