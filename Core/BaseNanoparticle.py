@@ -31,6 +31,7 @@ class BaseNanoparticle:
 
     def get_as_dictionary(self, thin=False, return_atom_features=False, return_local_environments=False, return_neighbor_list=False,
                           return_feature_vectors=False, return_positions=False):
+        #TODO pass dict with keywords instead
         data = dict()
         data['energies'] = self.energies
         data['symbols'] = self.atoms.get_symbols()
