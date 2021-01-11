@@ -9,10 +9,15 @@ class GlobalFeatureClassifier:
     def get_feature_key(self):
         return self.feature_key
 
+    def set_feature_key(self, feature_key):
+        self.feature_key = feature_key
+
     def compute_feature_vector(self, particle):
         raise NotImplementedError
 
 
+# TODO better name
+# TODO refactor handling of symbols
 class SimpleFeatureClassifier(GlobalFeatureClassifier):
     def __init__(self, symbols):
         GlobalFeatureClassifier.__init__(self)
@@ -31,6 +36,7 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
         M = particle.get_stoichiometry()[self.symbol_a] * 0.1
         particle.set_feature_vector(self.feature_key, np.array([n_aa_bonds / n_atoms, n_bb_bonds / n_atoms, n_ab_bonds / n_atoms, M]))
 
+    # TODO move to BaseNanoparticle
     def compute_respective_bond_counts(self, particle):
         n_aa_bonds = 0
         n_ab_bonds = 0

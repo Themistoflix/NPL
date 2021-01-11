@@ -7,7 +7,7 @@ from GuidedMC.GuidedExchangeOperator import GuidedExchangeOperator
 
 
 def run_basin_hopping(start_particle, energy_calculator, local_feature_classifier, total_energies, n_hopping_attempts, n_hops):
-    symbols = start_particle.get_contributing_symbols()
+    symbols = start_particle.get_all_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
     energy_key = energy_calculator.get_energy_key()
 

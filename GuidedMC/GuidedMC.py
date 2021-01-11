@@ -9,7 +9,7 @@ from GuidedMC.GuidedExchangeOperator import RandomExchangeOperator
 
 #@Core.Profiler.profile
 def run_guided_MC(start_particle, energy_calculator, local_feature_classifier, total_energies):
-    symbols = start_particle.get_contributing_symbols()
+    symbols = start_particle.get_all_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
     energy_key = energy_calculator.get_energy_key()
 
@@ -78,7 +78,7 @@ def run_guided_MC(start_particle, energy_calculator, local_feature_classifier, t
 
 #@Core.Profiler.profile
 def run_normal_MC(beta, max_steps, start_particle, energy_calculator, local_feature_classifier):
-    symbols = start_particle.get_contributing_symbols()
+    symbols = start_particle.get_all_symbols()
 
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
 

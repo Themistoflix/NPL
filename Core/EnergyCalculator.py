@@ -18,6 +18,9 @@ class EnergyCalculator:
     def get_energy_key(self):
         return copy.deepcopy(self.energy_key)
 
+    def set_energy_key(self, energy_key):
+        self.energy_key = energy_key
+
 
 class EMTCalculator(EnergyCalculator):
     def __init__(self, fmax=0.01, steps=20):
@@ -27,15 +30,13 @@ class EMTCalculator(EnergyCalculator):
         self.energy_key = 'EMT'
 
     def compute_energy(self, particle, return_optimized_atoms=False):
-        #cell_width = particle.lattice.width * particle.lattice.lattice_constant
-        #cell_length = particle.lattice.length * particle.lattice.lattice_constant
-        #cell_height = particle.lattice.height * particle.lattice.lattice_constant
-
         cell_width = 1e3
         cell_height = 1e3
         cell_length = 1e3
 
-        atoms = particle.get_ASE_atoms()
+        # TODO check if this modifies the particle
+        # in that case add relax atoms kwarg
+        atoms = particle.get_ase_atoms()
         atoms.set_cell(np.array([[cell_width, 0, 0], [0, cell_length, 0], [0, 0, cell_height]]))
         atoms.set_calculator(EMT())
         dyn = BFGS(atoms)
@@ -75,6 +76,7 @@ class GPRCalculator(EnergyCalculator):
 
 
 class MixingEnergyCalculator(EnergyCalculator):
+    # TODO decouple from EMT, couple with any other energy calculator
     def __init__(self, mixing_parameters=None, fmax=0.05, steps=20, recompute_emt_energy=False):
         EnergyCalculator.__init__(self)
 
@@ -133,7 +135,7 @@ class BayesianRRCalculator(EnergyCalculator):
         brr_energy = np.dot(np.transpose(self.ridge.coef_), particle.get_feature_vector(self.feature_key))
         particle.set_energy(self.energy_key, brr_energy)
 
-
+# TODO move to relevant file -> Basin Hopping
 def compute_coefficients_for_linear_topological_model(global_topological_coefficients, symbols, n_atoms):
     coordination_numbers = list(range(13))
     symbols_copy = copy.deepcopy(symbols)

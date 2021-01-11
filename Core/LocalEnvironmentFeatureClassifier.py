@@ -53,13 +53,13 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
         self.feature_key = feature_key
 
     def compute_n_features(self, particle):
-        n_elements = len(particle.get_contributing_symbols())
+        n_elements = len(particle.get_all_symbols())
         n_features = self.n_cluster * n_elements
         return n_features
 
     def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
         symbol = particle.get_symbol(lattice_index)
-        symbols = sorted(particle.get_contributing_symbols())
+        symbols = sorted(particle.get_all_symbols())
         symbol_index = symbols.index(symbol)
 
         offset = symbol_index*self.n_cluster
@@ -127,7 +127,7 @@ class TopologicalEnvironmentClassifier3(LocalEnvironmentFeatureClassifier):
 
     def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
         symbol = particle.get_symbol(lattice_index)
-        symbols = sorted(particle.get_contributing_symbols())
+        symbols = sorted(particle.get_all_symbols())
         symbol_index = symbols.index(symbol)
 
         element_offset = symbol_index*self.n_envs

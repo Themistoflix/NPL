@@ -13,7 +13,7 @@ class ExchangeOperator:
             print("Pure particle! No permutation possible")
             return new_particle
 
-        symbols = new_particle.atoms.get_contributing_symbols()
+        symbols = new_particle.atoms.get_all_symbols()
         symbol1 = symbols[0]
         symbol2 = symbols[1]
 

@@ -1,13 +1,13 @@
 import numpy as np
 
 from Core.BaseNanoparticle import BaseNanoparticle
-from Core.IndexedAtoms import Atom
+from Core.AtomWrapper import Atom
 from Core import Profiler
 
 
 class Nanoparticle(BaseNanoparticle):
     def __init__(self, lattice):
-        BaseNanoparticle.__init__(self, lattice)
+        BaseNanoparticle.__init__(self)
 
     def truncated_octahedron(self, height, trunc, stoichiometry, scale_factor):
         bounding_box_anchor = [0, 0, 0]

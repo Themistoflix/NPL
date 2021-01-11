@@ -1,5 +1,5 @@
 from Core import Nanoparticle as NP
-from Core import IndexedAtoms as IA
+from Core import AtomWrapper as IA
 from Core import CuttingPlaneUtilities
 
 

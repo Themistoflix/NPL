@@ -58,7 +58,7 @@ class GuidedExchangeOperator:
         return [(symbol1_index, symbol2_index)]
 
     def bind_particle(self, particle):
-        symbols = sorted(particle.atoms.get_contributing_symbols())
+        symbols = sorted(particle.atoms.get_all_symbols())
         symbol1 = symbols[0]
         symbol2 = symbols[1]
 
@@ -82,7 +82,7 @@ class GuidedExchangeOperator:
             self.symbol2_indices.add(index)
 
     def update(self, particle, indices, exchange_indices):
-        symbols = sorted(particle.atoms.get_contributing_symbols())
+        symbols = sorted(particle.atoms.get_all_symbols())
         symbol1 = symbols[0]
 
         atom_features = particle.get_atom_features(self.feature_key)
@@ -136,7 +136,7 @@ class RandomExchangeOperator:
         self.p_geometric = p_geometric
 
     def bind_particle(self, particle):
-        symbols = sorted(particle.atoms.get_contributing_symbols())
+        symbols = sorted(particle.atoms.get_all_symbols())
         self.symbol1 = symbols[0]
         self.symbol2 = symbols[1]
 

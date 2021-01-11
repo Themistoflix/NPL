@@ -1,19 +1,19 @@
-import numpy as np
-import copy
 import pickle
 
-from ase import Atoms
-
 from Core.BoundingBox import BoundingBox
-from Core.IndexedAtoms import IndexedAtoms, Atom
+from Core.AtomWrapper import AtomWrapper
 from Core.NeighborList import NeighborList
+
+from ase import Atoms
+from ase.io import read, write
 
 
 class BaseNanoparticle:
-    def __init__(self, lattice):
-        self.lattice = lattice
-        self.atoms = IndexedAtoms()
+    def __init__(self):
+        self.atoms = AtomWrapper()
         self.neighbor_list = NeighborList()
+
+        # TODO bounding box necessary?
         self.bounding_box = BoundingBox()
 
         self.energies = dict()
@@ -22,81 +22,76 @@ class BaseNanoparticle:
         self.atom_features = dict()
         self.feature_vectors = dict()
 
-    def get_topological_data(self):
+    def get_geometrical_data(self):
+        # Do not include symbols here so we can reuse the same geometry for several atomic orderings
         data = dict()
         data['neighbor_list'] = self.neighbor_list.list
         data['positions'] = self.atoms.get_positions()
 
         return data
 
-    def get_as_dictionary(self, thin=False, return_atom_features=False, return_local_environments=False, return_neighbor_list=False,
-                          return_feature_vectors=False, return_positions=False):
-        #TODO pass dict with keywords instead
-        data = dict()
-        data['energies'] = self.energies
-        data['symbols'] = self.atoms.get_symbols()
+    def get_as_dictionary(self, *fields):
+        full_particle_dict = {'energies': self.energies,
+                              'symbols': list(self.atoms.get_symbols()),
+                              'positions': self.atoms.get_positions(),
+                              'atom_features': self.atom_features,
+                              'local environments': self.local_environments,
+                              'neighbor_list': self.neighbor_list.list,
+                              'feature_vectors': self.feature_vectors}
 
-        if not thin:
-            data['atom_features'] = self.atom_features
-            data['local_environments'] = self.local_environments
-            data['neighbor_list'] = self.neighbor_list.list
-            data['feature_vectors'] = self.feature_vectors
-
-            data['positions'] = self.atoms.get_positions()
+        if fields is []:
+            return full_particle_dict
         else:
-            if return_atom_features:
-                data['atom_features'] = self.atom_features
-            if return_local_environments:
-                data['local_environments'] = self.local_environments
-            if return_neighbor_list:
-                data['neighbor_list'] = self.neighbor_list.list
-            if return_feature_vectors:
-                data['feature_vectors'] = self.feature_vectors
-            if return_positions:
-                data['positions'] = self.atoms.get_positions()
+            data = {}
+            for field in fields:
+                data[field] = full_particle_dict[field]
+            return data
 
-        return data
-
-    def save(self, filename, thin=False, save_topological_data_extra=False, filename_topo=None):
-        data = self.get_as_dictionary(thin)
+    def save(self, filename, filename_geometry=None, *fields):
+        data = self.get_as_dictionary(fields)
         pickle.dump(data, open(filename, 'wb'))
 
-        if save_topological_data_extra is True:
-            topological_data = self.get_topological_data()
-            pickle.dump(topological_data, open(filename_topo, 'wb'))
+        if filename_geometry is not None:
+            geometrical_data = self.get_geometrical_data()
+            pickle.dump(geometrical_data, open(filename_geometry, 'wb'))
 
-    def build_from_dictionary(self, dictionary=None, topological_data=None):
-        if dictionary is not None:
-            symbols = dictionary['symbols']
-            n_atoms = len(symbols)
-            if 'positions' in dictionary:
-                atoms = [Atom(symbols[i], dictionary['positions'][i]) for i in range(n_atoms)]
-            else:
-                atoms = [Atom(symbols[i], topological_data['positions'][i]) for i in range(n_atoms)]
+    def build_from_dictionary(self, particle_dict=None, geometrical_dict=None):
+        if geometrical_dict is None:
+            positions = particle_dict['positions']
+            symbols = particle_dict['symbols']
         else:
-            n_atoms = len(topological_data['positions'])
-            symbols = ['X']*n_atoms
-            atoms = [Atom(symbols[i], topological_data['positions'][i]) for i in range(n_atoms)]
+            positions = geometrical_dict['positions']
+            if particle_dict is None:
+                symbols = ['X']*len(positions)
+            else:
+                symbols = particle_dict['symbols']
+
+        atoms = Atoms(symbols, positions)
         self.atoms.add_atoms(atoms)
 
-        self.neighbor_list = NeighborList()
-        if dictionary is not None:
-            if 'neighbor_list' in dictionary:
-                self.neighbor_list.list = dictionary['neighbor_list']
-        if topological_data is not None:
-            if 'neighbor_list' in topological_data:
-                self.neighbor_list.list = topological_data['neighbor_list']
+        if particle_dict is None:
+            self.neighbor_list.list = geometrical_dict['neighbor_list']
+        else:
+            if 'neighbor_list' in particle_dict:
+                self.neighbor_list.list = particle_dict['neighbor_list']
 
-        if dictionary is not None:
-            self.energies = dictionary['energies']
+        if particle_dict is not None:
+            if 'neighbor_list' in particle_dict:
+                self.neighbor_list.list = particle_dict['neighbor_list']
+        if geometrical_dict is not None:
+            if 'neighbor_list' in geometrical_dict:
+                self.neighbor_list.list = geometrical_dict['neighbor_list']
 
-            if 'feature_vectors' in dictionary:
-                self.feature_vectors = dictionary['feature_vectors']
-            if 'atom_features' in dictionary:
-                self.atom_features = dictionary['atom_features']
+        if particle_dict is not None:
+            self.energies = particle_dict['energies']
 
-            if 'local_environments' in dictionary:
-                self.local_environments = dictionary['local_environments']
+            if 'feature_vectors' in particle_dict:
+                self.feature_vectors = particle_dict['feature_vectors']
+            if 'atom_features' in particle_dict:
+                self.atom_features = particle_dict['atom_features']
+
+            if 'local_environments' in particle_dict:
+                self.local_environments = particle_dict['local_environments']
 
     def load(self, filename=None, filename_topological_data=None):
         if filename is not None:
@@ -110,79 +105,81 @@ class BaseNanoparticle:
         else:
             self.build_from_dictionary(dictionary)
 
-    def load_xyz(self, filename, scale_factor=1.0, construct_neighbor_list=True):
-        with open(filename) as file:
-            for line in file.readlines()[2:]:
-                s = line.split(' ')
-                s = [f for f in s if f != '']
-                symbol = s[0]
-                position = np.array([float(s[1]), float(s[2]), float(s[3])])*scale_factor
-                atom = Atom(symbol, position)
-                self.atoms.add_atoms([atom])
+    def load_xyz(self, filename, construct_neighbor_list=True):
+        atoms = read(filename)
+        self.atoms.add_atoms(atoms)
 
         if construct_neighbor_list:
             self.construct_neighbor_list()
 
-    def add_atoms(self, atoms):
+    def save_xyz(self, filename):
+        atoms = self.atoms.get_ase_atoms()
+        write(filename, atoms)
+
+    def add_atoms(self, atoms, recompute_neighbor_list=True):
         self.atoms.add_atoms(atoms)
-        # TODO handle neighborlist
-        #indices, _ = zip(*atoms)
-        #self.neighbor_list.add_atoms(list(indices))
 
-    def remove_atoms(self, lattice_indices):
-        self.atoms.remove_atoms(lattice_indices)
+        if recompute_neighbor_list:
+            self.construct_neighbor_list()
 
-        # TODO handle neighbor list
-        #self.neighbor_list.remove_atoms(lattice_indices)
+    def remove_atoms(self, atom_indices, recompute_neighbor_list=True):
+        self.atoms.remove_atoms(atom_indices)
 
-    def transform_atoms(self, new_atoms, new_symbols):
-        self.atoms.transform_atoms(new_atoms, new_symbols)
+        if recompute_neighbor_list:
+            self.construct_neighbor_list()
+
+    def transform_atoms(self, atom_indices, new_symbols):
+        self.atoms.transform_atoms(atom_indices, new_symbols)
 
     def random_ordering(self, stoichiometry):
-        if sum(list(stoichiometry.values())) <= 1.0:
-            n_atoms = self.get_n_atoms()
+        # account for stoichiometries given as proportions instead of absolute numbers
+        if sum(stoichiometry.values()) == 1:
+            n_atoms = self.atoms.get_n_atoms()
+            transformed_stoichiometry = dict()
+            for symbol in sorted(stoichiometry):
+                transformed_stoichiometry[symbol] = int(n_atoms*stoichiometry[symbol])
 
-            symbols = list(stoichiometry.keys())
-            sum_atoms = 0
-            for symbol in symbols[:-1]:
-                stoichiometry[symbol] = int(n_atoms*stoichiometry[symbol])
-                sum_atoms += stoichiometry[symbol]
-            stoichiometry[symbols[-1]] = n_atoms - sum_atoms
+            # adjust for round-off error
+            if sum(transformed_stoichiometry.values()) != n_atoms:
+                diff = n_atoms - sum(transformed_stoichiometry.values())
+                transformed_stoichiometry[sorted(stoichiometry)[0]] += diff
 
-        self.atoms.random_ordering(stoichiometry)
+            print(transformed_stoichiometry)
+            self.atoms.random_ordering(transformed_stoichiometry)
+        else:
+            self.atoms.random_ordering(stoichiometry)
 
     def get_indices(self):
+        # TODO necessary?
         return self.atoms.get_indices()
 
     def get_n_bonds(self):
         return self.neighbor_list.get_n_bonds()
 
-    def get_contributing_symbols(self):
-        return self.atoms.get_contributing_symbols()
+    def get_all_symbols(self):
+        return self.atoms.get_all_symbols()
 
     def get_symbol(self, index):
         return self.atoms.get_symbol(index)
+
+    def get_symbols(self, indices=None):
+        return self.atoms.get_symbols(indices)
 
     def get_indices_by_symbol(self, symbol):
         return self.atoms.get_indices_by_symbol(symbol)
 
     def construct_neighbor_list(self):
-        self.neighbor_list.construct(self.atoms)
-
-    def construct_bounding_box(self):
-        self.bounding_box.construct(self.lattice, self.atoms.get_indices())
+        self.neighbor_list.construct(self.get_ase_atoms())
 
     def get_atom_indices_from_coordination_number(self, coordination_numbers, symbol=None):
         if symbol is None:
             return list(filter(lambda x: self.get_coordination_number(x) in coordination_numbers, self.atoms.get_indices()))
         else:
-            return list(filter(lambda x: self.get_coordination_number(x) in coordination_numbers and self.atoms.get_symbol(x) == symbol, self.atoms.get_indices()))
+            return list(filter(lambda x: self.get_coordination_number(x) in coordination_numbers
+                                         and self.atoms.get_symbol(x) == symbol, self.atoms.get_indices()))
 
-    def get_coordination_number(self, lattice_index):
-        return self.neighbor_list.get_coordination_number(lattice_index)
-
-    def get_atoms(self, atomIndices=None):
-        return copy.deepcopy(self.atoms.get_atoms(atomIndices))
+    def get_coordination_number(self, atom_idx):
+        return self.neighbor_list.get_coordination_number(atom_idx)
 
     def get_n_atoms(self):
         return self.atoms.get_n_atoms()
@@ -190,17 +187,8 @@ class BaseNanoparticle:
     def get_neighbor_list(self):
         return self.neighbor_list
 
-    def get_ASE_atoms(self, centered=True):
-        positions = [atom.get_position() for atom in self.atoms.get_atoms()]
-        symbols = [atom.get_symbol() for atom in self.atoms.get_atoms()]
-
-        atoms = Atoms(positions=positions, symbols=symbols)
-        if centered:
-            center_of_mass = atoms.get_center_of_mass()
-            positions = [atom.get_position() - center_of_mass for atom in self.atoms.get_atoms()]
-            atoms = Atoms(positions=positions, symbols=symbols)
-
-        return atoms
+    def get_ase_atoms(self, indices=None):
+        return self.atoms.get_ase_atoms(indices)
 
     def get_stoichiometry(self):
         return self.atoms.get_stoichiometry()
@@ -208,22 +196,22 @@ class BaseNanoparticle:
     def get_n_atoms_of_symbol(self, symbol):
         return self.atoms.get_n_atoms_of_symbol(symbol)
 
-    def set_energy(self, key, energy):
-        self.energies[key] = energy
+    def set_energy(self, energy_key, energy):
+        self.energies[energy_key] = energy
 
-    def get_energy(self, key):
-        return self.energies[key]
+    def get_energy(self, energy_key):
+        return self.energies[energy_key]
 
-    def has_energy(self, key):
-        if key in self.energies:
+    def has_energy(self, energy_key):
+        if energy_key in self.energies:
             return True
         return False
 
-    def set_feature_vector(self, key, feature_vector):
-        self.feature_vectors[key] = feature_vector
+    def set_feature_vector(self, feature_key, feature_vector):
+        self.feature_vectors[feature_key] = feature_vector
 
-    def get_feature_vector(self, key):
-        return self.feature_vectors[key]
+    def get_feature_vector(self, feature_key):
+        return self.feature_vectors[feature_key]
 
     def set_atom_features(self, atom_features, feature_key):
         self.atom_features[feature_key] = atom_features
@@ -236,11 +224,11 @@ class BaseNanoparticle:
             self.atom_features[feature_key] = dict()
         return self.atom_features[feature_key]
 
-    def set_local_environment(self, lattice_index, local_environment):
-        self.local_environments[lattice_index] = local_environment
+    def set_local_environment(self, atom_idx, local_environment):
+        self.local_environments[atom_idx] = local_environment
 
-    def get_local_environment(self, lattice_index):
-        return self.local_environments[lattice_index]
+    def get_local_environment(self, atom_idx):
+        return self.local_environments[atom_idx]
 
     def set_local_environments(self, local_environments):
         self.local_environments = local_environments
@@ -249,12 +237,6 @@ class BaseNanoparticle:
         return self.local_environments
 
     def is_pure(self):
-        #TODO can be done much simpler
-        first_symbol = True
-        for symbol in self.atoms.get_contributing_symbols():
-            if self.atoms.get_n_atoms_of_symbol(symbol) > 0:
-                if first_symbol:
-                    first_symbol = False
-                else:
-                    return False
-        return True
+        if len(self.atoms.get_stoichiometry()) == 1:
+            return True
+        return False

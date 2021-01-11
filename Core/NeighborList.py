@@ -1,6 +1,5 @@
 from ase.neighborlist import natural_cutoffs
 from ase.neighborlist import build_neighbor_list
-from ase import Atoms
 
 
 class NeighborList:
@@ -13,25 +12,18 @@ class NeighborList:
     def __setitem__(self, key, value):
         self.list[key] = value
 
-    def construct(self, indexed_atoms):
-        sorted_atom_indices = sorted([index for index in indexed_atoms.atoms_by_index])
+    def construct(self, atoms):
+        neighbor_list = build_neighbor_list(atoms,
+                                            cutoffs=natural_cutoffs(atoms),
+                                            bothways=True,
+                                            self_interaction=False)
 
-        positions = []
-        symbols = []
-        for atom_index in sorted_atom_indices:
-            atom = indexed_atoms.atoms_by_index[atom_index]
-            positions.append(atom.get_position())
-            symbols.append(atom.get_symbol())
+        for atom_idx, _ in enumerate(atoms):
+            neighbors, _ = neighbor_list.get_neighbors(atom_idx)
+            self.list[atom_idx] = set(neighbors)
 
-        atoms = Atoms(positions=positions, symbols=symbols)
-        neighbor_list = build_neighbor_list(atoms, cutoffs=natural_cutoffs(atoms), bothways=True, self_interaction=False)
-
-        for i in range(len(sorted_atom_indices)):
-            neighbors, _ = neighbor_list.get_neighbors(i)
-            self.list[sorted_atom_indices[i]] = set(neighbors)
-
-    def get_coordination_number(self, atom_index):
-        return len(self.list[atom_index])
+    def get_coordination_number(self, atom_idx):
+        return len(self.list[atom_idx])
 
     def get_n_bonds(self):
         n_bonds = sum([len(l) for l in list(self.list.values())])
