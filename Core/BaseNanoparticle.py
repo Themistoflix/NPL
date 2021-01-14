@@ -30,7 +30,7 @@ class BaseNanoparticle:
 
         return data
 
-    def get_as_dictionary(self, *fields):
+    def get_as_dictionary(self, fields=None):
         full_particle_dict = {'energies': self.energies,
                               'symbols': list(self.atoms.get_symbols()),
                               'positions': self.atoms.get_positions(),
@@ -39,7 +39,7 @@ class BaseNanoparticle:
                               'neighbor_list': self.neighbor_list.list,
                               'feature_vectors': self.feature_vectors}
 
-        if fields is []:
+        if fields is None:
             return full_particle_dict
         else:
             data = {}
@@ -47,7 +47,7 @@ class BaseNanoparticle:
                 data[field] = full_particle_dict[field]
             return data
 
-    def save(self, filename, filename_geometry=None, *fields):
+    def save(self, filename, fields, filename_geometry=None):
         data = self.get_as_dictionary(fields)
         pickle.dump(data, open(filename, 'wb'))
 
@@ -127,6 +127,9 @@ class BaseNanoparticle:
 
         if recompute_neighbor_list:
             self.construct_neighbor_list()
+
+    def swap_symbols(self, index_pairs):
+        self.atoms.swap_symbols(index_pairs)
 
     def transform_atoms(self, atom_indices, new_symbols):
         self.atoms.transform_atoms(atom_indices, new_symbols)

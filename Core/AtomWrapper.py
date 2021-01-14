@@ -20,7 +20,7 @@ class AtomWrapper:
             return self.atoms
         return self.atoms[indices]
 
-    def swap_symbol(self, index_pairs):
+    def swap_symbols(self, index_pairs):
         for idx1, idx2 in index_pairs:
             self.atoms[idx1].symbol, self.atoms[idx2].symbol = self.atoms[idx2].symbol, self.atoms[idx1].symbol
 
@@ -40,7 +40,7 @@ class AtomWrapper:
 
     def get_all_symbols(self):
         # return list of symbols which occur at least once in the particle
-        return self.atoms.symbols.species()
+        return list(self.atoms.symbols.species())
 
     def get_symbol(self, atom_idx):
         return self.atoms[atom_idx].symbol
@@ -72,5 +72,3 @@ class AtomWrapper:
         if indices is None:
             return self.atoms.positions
         return self.atoms[indices].positions
-
-

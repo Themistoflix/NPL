@@ -12,8 +12,8 @@ class LocalEnvironmentFeatureClassifier:
         if recompute_local_environments:
             self.local_environment_calculator.compute_local_environments(particle)
 
-        for index in particle.get_indices():
-            self.compute_atom_feature(particle, index, recompute_local_environments)
+        for atom_index in particle.get_indices():
+            self.compute_atom_feature(particle, atom_index, recompute_local_environments)
 
     def compute_feature_vector(self, particle, recompute_atom_features=True, recompute_local_environments=False):
         if recompute_atom_features:
@@ -27,10 +27,10 @@ class LocalEnvironmentFeatureClassifier:
 
         particle.set_feature_vector(self.feature_key, feature_vector)
 
-    def compute_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
-        feature = self.predict_atom_feature(particle, lattice_index, recompute_local_environment)
+    def compute_atom_feature(self, particle, atom_index, recompute_local_environment=False):
+        feature = self.predict_atom_feature(particle, atom_index, recompute_local_environment)
         atom_features = particle.get_atom_features(self.feature_key)
-        atom_features[lattice_index] = feature
+        atom_features[atom_index] = feature
 
     def get_feature_key(self):
         return self.feature_key
@@ -57,16 +57,17 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
         n_features = self.n_cluster * n_elements
         return n_features
 
-    def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
-        symbol = particle.get_symbol(lattice_index)
+    # TODO problematic: length of feature vector different for pure particles and bimetallic ones
+    def predict_atom_feature(self, particle, atom_index, recompute_local_environment=False):
+        symbol = particle.get_symbol(atom_index)
         symbols = sorted(particle.get_all_symbols())
         symbol_index = symbols.index(symbol)
 
         offset = symbol_index*self.n_cluster
         if recompute_local_environment:
-            environment = self.kMeans.predict([self.local_environment_calculator.predict_local_environment(particle, lattice_index)])[0]
+            environment = self.kMeans.predict([self.local_environment_calculator.predict_local_environment(particle, atom_index)])[0]
         else:
-            environment = self.kMeans.predict([particle.get_local_environment(lattice_index)])[0]
+            environment = self.kMeans.predict([particle.get_local_environment(atom_index)])[0]
         return offset + environment
 
     def kmeans_clustering(self, training_set):
@@ -78,6 +79,7 @@ class KMeansClassifier(LocalEnvironmentFeatureClassifier):
         self.kMeans = KMeans(n_clusters=self.n_cluster, random_state=0).fit(local_environments)
 
 
+# TODO rename, rework with offsets etc.
 class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
     def __init__(self, local_environment_calculator, symbols):
         LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
@@ -90,17 +92,17 @@ class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
     def compute_n_features(self, particle):
         return 182
 
-    def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
-        symbol = particle.get_symbol(lattice_index)
+    def predict_atom_feature(self, particle, atom_index, recompute_local_environment=False):
+        symbol = particle.get_symbol(atom_index)
         symbol_index = self.symbols.index(symbol)
 
         element_offset = symbol_index*91
 
         if recompute_local_environment:
-            self.local_environment_calculator.compute_local_environment(particle, lattice_index)
+            self.local_environment_calculator.compute_local_environment(particle, atom_index)
 
-        environment = particle.get_local_environment(lattice_index)
-        coordination_number = len(particle.neighbor_list[lattice_index])
+        environment = particle.get_local_environment(atom_index)
+        coordination_number = len(particle.neighbor_list[atom_index])
         coordination_number_offsets = [int(cn*(cn + 1)/2) for cn in range(13)]
 
         atom_feature = int(element_offset + coordination_number_offsets[coordination_number] + environment[0])
@@ -108,15 +110,14 @@ class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
         return atom_feature
 
 
-class TopologicalEnvironmentClassifier3(LocalEnvironmentFeatureClassifier):
+# TODO rename
+class CoordinationNumberClassifier(LocalEnvironmentFeatureClassifier):
     def __init__(self, local_environment_calculator):
         LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
         self.feature_key = 'TEC'
 
         self.coordination_number_offsets = dict()
         self.coordination_number_offsets[0] = 0
-#        for n_symbol_a_atoms in range(13):
- #           self.coordination_number_offsets[n_symbol_a_atoms] = sum([13 - i for i in range(n_symbol_a_atoms)])
 
         for n_symbol_a_atoms in range(13):
             self.coordination_number_offsets[n_symbol_a_atoms] = n_symbol_a_atoms
@@ -125,18 +126,19 @@ class TopologicalEnvironmentClassifier3(LocalEnvironmentFeatureClassifier):
     def compute_n_features(self, particle):
         return self.n_envs*2
 
-    def predict_atom_feature(self, particle, lattice_index, recompute_local_environment=False):
-        symbol = particle.get_symbol(lattice_index)
+    def predict_atom_feature(self, particle, atom_index, recompute_local_environment=False):
+        symbol = particle.get_symbol(atom_index)
         symbols = sorted(particle.get_all_symbols())
         symbol_index = symbols.index(symbol)
 
         element_offset = symbol_index*self.n_envs
 
         if recompute_local_environment:
-            self.local_environment_calculator.compute_local_environment(particle, lattice_index)
+            self.local_environment_calculator.compute_local_environment(particle, atom_index)
 
-        environment = particle.get_local_environment(lattice_index)
-        coordination_number = environment[0]
+        environment = particle.get_local_environment(atom_index)
+        coordination_number = environment[0] # TODO not robust, only works if 'X' is second element, should specify
+        # index of non-vacancy element
 
         atom_feature = element_offset + self.coordination_number_offsets[coordination_number]
 

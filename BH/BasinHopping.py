@@ -1,26 +1,12 @@
-import numpy as np
-import Core.Profiler
 import copy
-
-from Core.LocalEnvironmentCalculator import NeighborCountingEnvironmentCalculator
-from GuidedMC.GuidedExchangeOperator import GuidedExchangeOperator
+from LocalOpt.LocalOptimization import setup_local_optimization
 
 
 def run_basin_hopping(start_particle, energy_calculator, local_feature_classifier, total_energies, n_hopping_attempts, n_hops):
-    symbols = start_particle.get_all_symbols()
-    local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
-    energy_key = energy_calculator.get_energy_key()
-
-    local_env_calculator.compute_local_environments(start_particle)
-
-    local_feature_classifier.compute_feature_vector(start_particle)
-    feature_key = local_feature_classifier.get_feature_key()
-    energy_calculator.compute_energy(start_particle)
-
-    local_energies = energy_calculator.get_coefficients()
-
-    exchange_operator = GuidedExchangeOperator(local_energies, total_energies, feature_key)
-    exchange_operator.bind_particle(start_particle)
+    energy_key, local_env_calculator, exchange_operator = setup_local_optimization(start_particle,
+                                                                                   energy_calculator,
+                                                                                   local_feature_classifier,
+                                                                                   total_energies)
 
     old_E = start_particle.get_energy(energy_key)
     lowest_E = old_E
@@ -56,8 +42,6 @@ def run_basin_hopping(start_particle, energy_calculator, local_feature_classifie
             energy_calculator.compute_energy(start_particle)
             new_E = start_particle.get_energy(energy_key)
 
-
-            exchange_operator.reset_index()
             exchange_operator.update(start_particle, neighborhood, exchanged_indices)
 
             if new_E < old_E:

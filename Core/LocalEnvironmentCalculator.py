@@ -11,14 +11,15 @@ class LocalEnvironmentCalculator:
         for index in particle.get_indices():
             self.compute_local_environment(particle, index)
 
-    def compute_local_environment(self, particle, lattice_index):
-        local_env = self.predict_local_environment(particle, lattice_index)
-        particle.set_local_environment(lattice_index, local_env)
+    def compute_local_environment(self, particle, atom_index):
+        local_env = self.predict_local_environment(particle, atom_index)
+        particle.set_local_environment(atom_index, local_env)
 
     def predict_local_environment(self, particle, lattice_index):
         raise NotImplementedError
 
 
+# TODO Experimental
 class SOAPCalculator(LocalEnvironmentCalculator):
     def __init__(self, l_max):
         LocalEnvironmentCalculator.__init__(self)

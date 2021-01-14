@@ -29,14 +29,15 @@ class EMTCalculator(EnergyCalculator):
         self.steps = steps
         self.energy_key = 'EMT'
 
-    def compute_energy(self, particle, return_optimized_atoms=False):
+    def compute_energy(self, particle, relax_atoms=False):
         cell_width = 1e3
         cell_height = 1e3
         cell_length = 1e3
 
-        # TODO check if this modifies the particle
-        # in that case add relax atoms kwarg
         atoms = particle.get_ase_atoms()
+        if not relax_atoms:
+            atoms = atoms.copy()
+
         atoms.set_cell(np.array([[cell_width, 0, 0], [0, cell_length, 0], [0, 0, cell_height]]))
         atoms.set_calculator(EMT())
         dyn = BFGS(atoms)
@@ -44,9 +45,6 @@ class EMTCalculator(EnergyCalculator):
 
         energy = atoms.get_potential_energy()
         particle.set_energy(self.energy_key, energy)
-
-        if return_optimized_atoms:
-            return atoms
 
 
 class GPRCalculator(EnergyCalculator):

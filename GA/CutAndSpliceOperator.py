@@ -3,6 +3,7 @@ from Core import AtomWrapper as IA
 from Core import CuttingPlaneUtilities
 
 
+# TODO neighbor_list behavior is missing atm
 class CutAndSpliceOperator:
     def __init__(self, min_radius, max_radius, center=0.0):
         self.cutting_plane_generator = CuttingPlaneUtilities.SphericalCuttingPlaneGenerator(min_radius, max_radius, center)

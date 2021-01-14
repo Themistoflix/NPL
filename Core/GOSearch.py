@@ -3,7 +3,6 @@ from Core import LocalEnvironmentFeatureClassifier as LFC
 from Core import EnergyCalculator as EC
 from Core import GlobalFeatureClassifier as GFC
 
-import pickle
 import time
 
 
@@ -41,10 +40,6 @@ class GOSearch:
             results.append(result)
 
         return results, run_times
-
-    def save_results(self, results, filename):
-        pickle.dump(results, open(filename, 'wb'))
-        return
 
 
 class MCSearch(GOSearch):
@@ -161,13 +156,13 @@ class GuidedSearch(GOSearch):
     def __init__(self, find_global_minimum, create_start_configuration):
         GOSearch.__init__(self, find_global_minimum, create_start_configuration)
         self.total_energies = None
+        self.energy_calculator = None
 
     def fit_energy_expression(self, training_set, symbols):
         local_env_calculator = LEC.NeighborCountingEnvironmentCalculator(symbols)
         global_feature_classifier = GFC.TopologicalFeatureClassifier(symbols)
 
         self.energy_calculator = EC.BayesianRRCalculator(global_feature_classifier.get_feature_key())
-        self.local_feature_classifier = LFC.TopologicalEnvironmentClassifier(local_env_calculator, symbols)
 
         for p in training_set:
             local_env_calculator.compute_local_environments(p)
@@ -181,7 +176,7 @@ class GuidedSearch(GOSearch):
         print(topological_coefficients)
 
         self.energy_calculator.set_coefficients(topological_coefficients)
-        self.energy_calculator.set_feature_key(self.local_feature_classifier.get_feature_key())
+        self.energy_calculator.set_feature_key('TEC')
 
         return
 
@@ -191,7 +186,7 @@ class GuidedSearch(GOSearch):
         else:
             start_config = self.create_start_configuration(*args_start)
 
-        args = [start_config, self.energy_calculator, self.local_feature_classifier, self.total_energies]
+        args = [start_config, self.energy_calculator, self.total_energies]
         if additional_args is not None:
             return args + additional_args
         else:
