@@ -13,25 +13,17 @@ class ExchangeOperator:
             print("Pure particle! No permutation possible")
             return new_particle
 
-        symbols = new_particle.atoms.get_all_symbols()
+        symbols = new_particle.get_all_symbols()
         symbol1 = symbols[0]
         symbol2 = symbols[1]
 
-        max_exchanges = min(len(new_particle.atoms.get_indices_by_symbol(symbol1)), len(new_particle.atoms.get_indices_by_symbol(symbol2)))
+        max_exchanges = min(new_particle.get_n_atoms_of_symbol(symbol1), new_particle.get_n_atoms_of_symbol(symbol2))
         if n_exchanges is None:
-            n_exchanges = min(self.draw_from_geometric_distribution(self.p), max_exchanges)
+            n_exchanges = min(np.random.geometric(p=self.p, size=1)[0], max_exchanges)
 
-        symbol1_indices = np.random.choice(new_particle.atoms.get_indices_by_symbol(symbol1), n_exchanges, replace=False)
-        symbol2_indices = np.random.choice(new_particle.atoms.get_indices_by_symbol(symbol2), n_exchanges, replace=False)
+        symbol1_indices = np.random.choice(new_particle.get_indices_by_symbol(symbol1), n_exchanges, replace=False)
+        symbol2_indices = np.random.choice(new_particle.get_indices_by_symbol(symbol2), n_exchanges, replace=False)
 
-        new_particle.atoms.swap_atoms(zip(symbol1_indices, symbol2_indices))
+        new_particle.swap_symbols(zip(symbol1_indices, symbol2_indices))
 
         return new_particle
-
-    def draw_from_geometric_distribution(self, p):
-        return np.random.geometric(p=p, size=1)[0]
-
-
-
-
-

@@ -138,7 +138,8 @@ class GASearch(GOSearch):
             start_population = self.create_start_configuration()
         else:
             start_population = self.create_start_configuration(*args_start)
-        args = [start_population, self.unsuccessful_steps_for_convergence, self.energy_calculator, self.local_env_calculator, self.local_feature_classifier]
+        args = [start_population, self.unsuccessful_steps_for_convergence, self.energy_calculator,
+                self.local_env_calculator, self.local_feature_classifier]
 
         if additional_args is not None:
             return args + additional_args

@@ -3,6 +3,7 @@ import numpy as np
 from ase import Atoms
 
 
+# TODO derive directly from ase.Atoms
 class AtomWrapper:
     def __init__(self):
         self.atoms = Atoms()
@@ -54,11 +55,12 @@ class AtomWrapper:
         if symbol in self.atoms.symbols.indices():
             return self.atoms.symbols.indices()[symbol]
         else:
-            return None
+            return np.array([])
 
     def get_n_atoms(self):
         return len(self.atoms)
 
+    # TODO implement more efficiently using in-built ase methods
     def get_n_atoms_of_symbol(self, symbol):
         return len(self.get_indices_by_symbol(symbol))
 

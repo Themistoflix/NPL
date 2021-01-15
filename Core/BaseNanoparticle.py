@@ -1,6 +1,5 @@
 import pickle
 
-from Core.BoundingBox import BoundingBox
 from Core.AtomWrapper import AtomWrapper
 from Core.NeighborList import NeighborList
 
@@ -12,9 +11,6 @@ class BaseNanoparticle:
     def __init__(self):
         self.atoms = AtomWrapper()
         self.neighbor_list = NeighborList()
-
-        # TODO bounding box necessary?
-        self.bounding_box = BoundingBox()
 
         self.energies = dict()
 

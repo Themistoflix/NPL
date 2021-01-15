@@ -1,5 +1,5 @@
-import random
 import numpy as np
+from ase import Atoms
 
 
 class CuttingPlane:
@@ -7,49 +7,35 @@ class CuttingPlane:
         self.anchor = anchor
         self.normal = normal
 
-    def split_atom_indices(self, lattice, atom_indices):
-        atoms_in_positive_subspace = set()
-        atoms_in_negative_subspace = set()
+    def split_atoms(self, atoms):
+        atoms_in_positive_subspace = Atoms()
+        atoms_in_negative_subspace = Atoms()
 
-        for lattice_index in atom_indices:
-            position = lattice.get_cartesian_position_from_index(lattice_index)
+        for atom in atoms.copy():
+            position = atom.position
             if np.dot((position - self.anchor), self.normal) >= 0.0:
-                atoms_in_positive_subspace.add(lattice_index)
+                atoms_in_positive_subspace += atom
             else:
-                atoms_in_negative_subspace.add(lattice_index)
+                atoms_in_negative_subspace += atom
         return atoms_in_positive_subspace, atoms_in_negative_subspace
 
 
-class CuttingPlaneGenerator:
-    def __init__(self, center):
+class SphericalCuttingPlaneGenerator:
+    def __init__(self, max_radius, min_radius=0.0, center=0.0):
         self.center = center
-
-    def generate_new_cutting_plane(self):
-        raise NotImplementedError()
+        self.min_radius = min_radius
+        self.max_radius = max_radius
 
     def set_center(self, center):
         self.center = center
 
-    def create_axis_parallel_cutting_plane(self, position):
-        anchor = position
-        normal = np.array([0, 0, 0])
-        normal[random.randrange(2)] = 1.0
-
-        return CuttingPlane(anchor, normal)
-
-
-class SphericalCuttingPlaneGenerator(CuttingPlaneGenerator):
-    def __init__(self, minRadius, maxRadius, center=0.0):
-        super().__init__(center)
-        self.minRadius = minRadius
-        self.maxRadius = maxRadius
+    def set_max_radius(self, max_radius):
+        self.max_radius = max_radius
 
     def generate_new_cutting_plane(self):
-        normal = np.array([random.random() * 2 - 1, random.random() * 2 - 1, random.random() * 2 - 1])
+        normal = np.array([np.random.random() for _ in range(3)])
         normal = normal / np.linalg.norm(normal)
-        anchor = normal * (self.minRadius + random.random() * (self.maxRadius - self.minRadius))
+        anchor = normal * (self.min_radius + np.random.normal(0, 1) * (self.max_radius - self.min_radius))
         anchor = anchor + self.center
 
         return CuttingPlane(anchor, normal)
-
-

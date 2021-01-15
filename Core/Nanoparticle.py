@@ -19,23 +19,28 @@ class Nanoparticle(BaseNanoparticle):
         self.construct_neighbor_list()
 
     def adjust_stoichiometry(self, target_stoichiometry):
-        def transform_n_random_atoms(symbol_from, symbol_to, n_atoms):
-            symbol_from_atoms = self.get_indices_by_symbol(symbol_from)
-            atoms_to_be_transformed = np.random.choice(symbol_from_atoms, n_atoms, replace=False)
-            self.transform_atoms(zip(atoms_to_be_transformed, [symbol_to] * n_atoms), a)
+        def choose_n_atoms_with_symbol(symbol, n_atoms):
+            atoms_with_symbol = self.get_indices_by_symbol(symbol)
+            selected_atoms = np.random.choice(atoms_with_symbol, n_atoms, replace=False)
+            return selected_atoms
 
+        excess_atoms = np.array([])
         for symbol in self.get_stoichiometry():
             if symbol in target_stoichiometry:
                 difference = self.get_stoichiometry()[symbol] - target_stoichiometry[symbol]
-                if difference > 0:
-                    transform_n_random_atoms(symbol, 'Z', difference)
+            else:
+                difference = self.get_stoichiometry()[symbol]
+
+            if difference > 0:
+                excess_atoms = np.append(excess_atoms, choose_n_atoms_with_symbol(symbol, difference), 0)
+
+        np.random.shuffle(excess_atoms)
+        excess_atoms = excess_atoms.astype(np.int)
 
         for symbol in target_stoichiometry:
-            if symbol == 'Z':
-                continue
             difference = target_stoichiometry[symbol]
             if symbol in self.get_stoichiometry():
                 difference = target_stoichiometry[symbol] - self.get_stoichiometry()[symbol]
-            transform_n_random_atoms('Z', symbol, difference)
+            self.transform_atoms(excess_atoms[-difference:], [symbol]*difference)
+            excess_atoms = excess_atoms[:-difference]
         return
-
