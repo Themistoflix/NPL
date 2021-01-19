@@ -107,6 +107,7 @@ class GASearch(GOSearch):
         self.local_env_calculator = None
         self.energy_calculator = None
         self.local_feature_classifier = None
+        self.total_energies = None
 
     def fit_energy_expression(self, training_set, symbols):
         local_env_calculator = LEC.NeighborCountingEnvironmentCalculator(symbols)
@@ -124,9 +125,8 @@ class GASearch(GOSearch):
 
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
-        print(lin_coef)
-        topological_coefficients, _ = EC.compute_coefficients_for_linear_topological_model(lin_coef, symbols, n_atoms)
-        print(topological_coefficients)
+        topological_coefficients, self.total_energies = EC.compute_coefficients_for_linear_topological_model(
+            lin_coef, symbols, n_atoms)
 
         self.energy_calculator.set_coefficients(topological_coefficients)
         self.energy_calculator.set_feature_key(self.local_feature_classifier.get_feature_key())
@@ -139,7 +139,7 @@ class GASearch(GOSearch):
         else:
             start_population = self.create_start_configuration(*args_start)
         args = [start_population, self.unsuccessful_steps_for_convergence, self.energy_calculator,
-                self.local_env_calculator, self.local_feature_classifier]
+                self.local_env_calculator, self.local_feature_classifier, self.total_energies]
 
         if additional_args is not None:
             return args + additional_args
@@ -173,8 +173,8 @@ class GuidedSearch(GOSearch):
 
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
-        topological_coefficients, self.total_energies = EC.compute_coefficients_for_linear_topological_model(lin_coef, symbols, n_atoms)
-        print(topological_coefficients)
+        topological_coefficients, self.total_energies = EC.compute_coefficients_for_linear_topological_model(
+            lin_coef, symbols, n_atoms)
 
         self.energy_calculator.set_coefficients(topological_coefficients)
         self.energy_calculator.set_feature_key('TEC')

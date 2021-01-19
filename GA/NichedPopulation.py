@@ -1,6 +1,7 @@
 import numpy as np
 
 
+# TODO these features are experimental right now
 class Population:
     def __init__(self):
         pass

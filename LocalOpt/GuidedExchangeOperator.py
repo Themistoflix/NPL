@@ -42,13 +42,13 @@ class GuidedExchangeOperator:
             expected_energy_gain = symbol1_energy + symbol2_energy
             if expected_energy_gain > 0:
                 particle.swap_symbols([(symbol1_index, symbol2_index)])
-                return [(symbol1_index, symbol2_index)]
+                return symbol1_index, symbol2_index
 
         symbol1_index = self.symbol1_indices[index % self.n_symbol1_atoms]
         symbol2_index = self.symbol2_indices[index % self.n_symbol2_atoms]
 
         particle.swap_symbols([(symbol1_index, symbol2_index)])
-        return [(symbol1_index, symbol2_index)]
+        return symbol1_index, symbol2_index
 
     def bind_particle(self, particle):
         symbols = sorted(particle.atoms.get_all_symbols())

@@ -22,42 +22,44 @@ def setup_local_optimization(start_particle, energy_calculator, environment_ener
     return energy_key, local_env_calculator, local_feature_classifier, exchange_operator
 
 
+def update_atomic_features(index1, index2, local_env_calculator, local_feature_classifier, particle):
+    neighborhood = {index1, index2}
+    neighborhood = neighborhood.union(particle.neighbor_list[index1])
+    neighborhood = neighborhood.union(particle.neighbor_list[index2])
+
+    for index in neighborhood:
+        local_env_calculator.compute_local_environment(particle, index)
+        local_feature_classifier.compute_atom_feature(particle, index)
+
+    local_feature_classifier.compute_feature_vector(particle, recompute_atom_features=False)
+    return particle, neighborhood
+
+
 def local_optimization(start_particle, energy_calculator, environment_energies):
     energy_key, local_env_calculator, local_feature_classifier, exchange_operator = setup_local_optimization(
         start_particle, energy_calculator, environment_energies)
 
+    start_energy = start_particle.get_energy(energy_key)
+    accepted_energies = [(start_energy, 0)]
+
     step = 0
-
-    old_energy = start_particle.get_energy(energy_key)
-
-    accepted_energies = [(old_energy, 0)]
-
     while True:
-        index1, index2 = exchange_operator.guided_exchange(start_particle)
         step += 1
-
+        index1, index2 = exchange_operator.guided_exchange(start_particle)
         exchanged_indices = [index1, index2]
 
-        neighborhood = {index1, index2}
-        neighborhood = neighborhood.union(start_particle.neighbor_list[index1])
-        neighborhood = neighborhood.union(start_particle.neighbor_list[index2])
-
-        for index in neighborhood:
-            local_env_calculator.compute_local_environment(start_particle, index)
-            local_feature_classifier.compute_atom_feature(start_particle, index)
-
-        local_feature_classifier.compute_feature_vector(start_particle, recompute_atom_features=False)
+        start_particle, neighborhood = update_atomic_features(index1, index2, local_env_calculator,
+                                                              local_feature_classifier, start_particle)
+        exchange_operator.update(start_particle, neighborhood, exchanged_indices)
 
         energy_calculator.compute_energy(start_particle)
         new_energy = start_particle.get_energy(energy_key)
 
-        exchange_operator.update(start_particle, neighborhood, exchanged_indices)
-
-        if new_energy < old_energy:
-            old_energy = new_energy
+        if new_energy < start_energy:
+            start_energy = new_energy
             accepted_energies.append((new_energy, step))
         else:
-            accepted_energies.append((old_energy, step))
+            accepted_energies.append((start_energy, step))
 
             # roll back last exchange and make sure features and environments are up-to-date
             start_particle.swap_symbols([(index1, index2)])

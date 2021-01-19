@@ -2,6 +2,7 @@ from Core.Nanoparticle import Nanoparticle
 from Core.CuttingPlaneUtilities import SphericalCuttingPlaneGenerator
 
 
+# TODO use atom positions to estimate max cutting radius
 class CutAndSpliceOperator:
     def __init__(self, max_radius, recompute_neighbor_list=False):
         self.cutting_plane_generator = SphericalCuttingPlaneGenerator(max_radius, 0.0, 0.0)
