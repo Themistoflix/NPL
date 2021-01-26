@@ -1,10 +1,12 @@
+from collections import defaultdict
+
 from ase.neighborlist import natural_cutoffs
 from ase.neighborlist import build_neighbor_list
 
 
 class NeighborList:
     def __init__(self):
-        self.list = dict()
+        self.list = defaultdict(lambda: set())
 
     def __getitem__(self, item):
         return self.list[item]

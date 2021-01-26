@@ -1,5 +1,6 @@
 from Core.Nanoparticle import Nanoparticle
 from Core.CuttingPlaneUtilities import SphericalCuttingPlaneGenerator
+import numpy as np
 
 
 # TODO use atom positions to estimate max cutting radius
@@ -10,6 +11,8 @@ class CutAndSpliceOperator:
 
     def cut_and_splice(self, particle1, particle2, fixed_stoichiometry=True):
         self.cutting_plane_generator.set_center(particle1.get_ase_atoms().get_center_of_mass())
+        self.cutting_plane_generator.set_max_radius(np.max(particle1.get_ase_atoms().get_positions() -
+                                                           particle1.get_ase_atoms().get_center_of_mass()))
 
         while True:
             cutting_plane = self.cutting_plane_generator.generate_new_cutting_plane()

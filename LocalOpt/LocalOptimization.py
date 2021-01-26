@@ -3,10 +3,11 @@ from LocalOpt.GuidedExchangeOperator import GuidedExchangeOperator
 from Core.LocalEnvironmentFeatureClassifier import TopologicalEnvironmentClassifier
 
 
-def setup_local_optimization(start_particle, energy_calculator, environment_energies):
+def setup_local_optimization(start_particle, energy_calculator, environment_energies, local_feature_classifier=None):
     symbols = start_particle.get_all_symbols()
     local_env_calculator = NeighborCountingEnvironmentCalculator(symbols)
-    local_feature_classifier = TopologicalEnvironmentClassifier(local_env_calculator, symbols)
+    if local_feature_classifier is None:
+        local_feature_classifier = TopologicalEnvironmentClassifier(local_env_calculator, symbols)
 
     local_env_calculator.compute_local_environments(start_particle)
     local_feature_classifier.compute_feature_vector(start_particle)
@@ -35,9 +36,9 @@ def update_atomic_features(index1, index2, local_env_calculator, local_feature_c
     return particle, neighborhood
 
 
-def local_optimization(start_particle, energy_calculator, environment_energies):
+def local_optimization(start_particle, energy_calculator, environment_energies, local_feature_classifier=None):
     energy_key, local_env_calculator, local_feature_classifier, exchange_operator = setup_local_optimization(
-        start_particle, energy_calculator, environment_energies)
+        start_particle, energy_calculator, environment_energies, local_feature_classifier)
 
     start_energy = start_particle.get_energy(energy_key)
     accepted_energies = [(start_energy, 0)]

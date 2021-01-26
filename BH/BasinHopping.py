@@ -4,9 +4,10 @@ from LocalOpt.LocalOptimization import update_atomic_features
 import copy
 
 
-def run_basin_hopping(start_particle, energy_calculator, environment_energies, n_hopping_attempts, n_hops):
+def run_basin_hopping(start_particle, energy_calculator, environment_energies, n_hopping_attempts, n_hops,
+                      local_feature_classifier=None):
     energy_key, local_env_calculator, local_feature_classifier, exchange_operator = setup_local_optimization(
-        start_particle, energy_calculator, environment_energies)
+        start_particle, energy_calculator, environment_energies, local_feature_classifier)
 
     start_energy = start_particle.get_energy(energy_key)
     accepted_energies = [(start_energy, 0)]
@@ -32,7 +33,8 @@ def run_basin_hopping(start_particle, energy_calculator, environment_energies, n
                 start_energy = new_energy
                 lowest_energy = min(lowest_energy, start_energy)
             else:
-                print('Energy after local_opt: {}, lowest {}'.format(start_energy, lowest_energy))
+                if i % 20 == 0:
+                    print('Energy after local_opt: {}, lowest {}'.format(start_energy, lowest_energy))
 
                 if lowest_energy == start_energy:
                     start_particle.swap_symbols([(index1, index2)])

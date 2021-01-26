@@ -34,7 +34,7 @@ class EMTCalculator(EnergyCalculator):
         cell_height = 1e3
         cell_length = 1e3
 
-        atoms = particle.get_ase_atoms()
+        atoms = particle.get_ase_atoms(exclude_x=True)
         if not relax_atoms:
             atoms = atoms.copy()
 
@@ -65,7 +65,8 @@ class GPRCalculator(EnergyCalculator):
         feature_vectors = [p.get_feature_vector(self.feature_key) for p in training_set]
         energies = [p.get_energy(energy_key) for p in training_set]
 
-        self.GPR = gp.GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=20, alpha=self.alpha, normalize_y=self.normalize_y)
+        self.GPR = gp.GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=20, alpha=self.alpha,
+                                               normalize_y=self.normalize_y)
         self.GPR.fit(feature_vectors, energies)
 
     def compute_energy(self, particle):
@@ -133,6 +134,7 @@ class BayesianRRCalculator(EnergyCalculator):
         brr_energy = np.dot(np.transpose(self.ridge.coef_), particle.get_feature_vector(self.feature_key))
         particle.set_energy(self.energy_key, brr_energy)
 
+
 # TODO move to relevant file -> Basin Hopping
 def compute_coefficients_for_linear_topological_model(global_topological_coefficients, symbols, n_atoms):
     coordination_numbers = list(range(13))
@@ -151,7 +153,7 @@ def compute_coefficients_for_linear_topological_model(global_topological_coeffic
         for cn_number in coordination_numbers:
             for n_symbol_a_atoms in range(cn_number + 1):
                 E = 0
-                E_tot = 0
+
                 if symbol == symbol_a:
                     E += (global_topological_coefficients[3]*0.1) # careful...
                     E += (n_symbol_a_atoms*E_aa_bond/2)
@@ -177,11 +179,10 @@ def compute_coefficients_for_linear_topological_model(global_topological_coeffic
     return coefficients, total_energies
 
 
-def compute_coefficients_for_shape_optimization(global_topological_coefficients, symbols, n_atoms):
+def compute_coefficients_for_shape_optimization(global_topological_coefficients, symbols):
     coordination_numbers = list(range(13))
     symbols_copy = copy.deepcopy(symbols)
     symbols_copy.sort()
-    symbol_a = symbols_copy[0]
 
     E_aa_bond = global_topological_coefficients[0]
 
@@ -191,20 +192,21 @@ def compute_coefficients_for_shape_optimization(global_topological_coefficients,
 
     coefficients = []
     total_energies = []
-    for symbol in symbols_copy:
-        for n_symbol_a_atoms in coordination_numbers:
+    for cn_number in coordination_numbers:
+        for n_symbol_a_atoms in range(cn_number + 1):
             E = 0
-            E_tot = 0
-            if symbol == symbol_a:
-                E += (n_symbol_a_atoms*E_aa_bond/2)
-                E += (coordination_energies_a[n_symbol_a_atoms])
 
-                E_tot += n_symbol_a_atoms*E_aa_bond/2
-                coefficients.append(E)
-                total_energies.append(E_tot)
-    coefficients += [0]*len(coordination_numbers)
-    total_energies += [0]*len(coordination_numbers)
+            E += (n_symbol_a_atoms*E_aa_bond/2)
+            E += (coordination_energies_a[cn_number])
+
+            E_tot = E + n_symbol_a_atoms*E_aa_bond/2
+
+            coefficients.append(E)
+            total_energies.append(E_tot)
+
+    coefficients += [0]*len(coefficients)
+    total_energies += [0]*len(total_energies)
 
     coefficients = np.array(coefficients)
 
-    return coefficients
+    return coefficients, total_energies

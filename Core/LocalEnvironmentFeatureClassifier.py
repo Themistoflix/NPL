@@ -87,6 +87,8 @@ class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
         symbols_copy.sort()
         self.symbols = symbols_copy
 
+        self.coordination_number_offsets = [int(cn*(cn + 1)/2) for cn in range(13)]
+
         self.feature_key = 'TEC'
 
     def compute_n_features(self, particle):
@@ -103,9 +105,8 @@ class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
 
         environment = particle.get_local_environment(atom_index)
         coordination_number = len(particle.neighbor_list[atom_index])
-        coordination_number_offsets = [int(cn*(cn + 1)/2) for cn in range(13)]
 
-        atom_feature = int(element_offset + coordination_number_offsets[coordination_number] + environment[0])
+        atom_feature = int(element_offset + self.coordination_number_offsets[coordination_number] + environment[0])
 
         return atom_feature
 
@@ -114,32 +115,29 @@ class TopologicalEnvironmentClassifier(LocalEnvironmentFeatureClassifier):
 class CoordinationNumberClassifier(LocalEnvironmentFeatureClassifier):
     def __init__(self, local_environment_calculator):
         LocalEnvironmentFeatureClassifier.__init__(self, local_environment_calculator)
+        self.coordination_number_offsets = [int(cn * (cn + 1) / 2) for cn in range(13)]
+
         self.feature_key = 'TEC'
 
-        self.coordination_number_offsets = dict()
-        self.coordination_number_offsets[0] = 0
-
-        for n_symbol_a_atoms in range(13):
-            self.coordination_number_offsets[n_symbol_a_atoms] = n_symbol_a_atoms
-        self.n_envs = 13
-
     def compute_n_features(self, particle):
-        return self.n_envs*2
+        return 182
 
     def predict_atom_feature(self, particle, atom_index, recompute_local_environment=False):
         symbol = particle.get_symbol(atom_index)
-        symbols = sorted(particle.get_all_symbols())
-        symbol_index = symbols.index(symbol)
+        if symbol == 'X':
+            symbol_index = 1
+        else:
+            symbol_index = 0
 
-        element_offset = symbol_index*self.n_envs
+        element_offset = symbol_index*91
 
         if recompute_local_environment:
             self.local_environment_calculator.compute_local_environment(particle, atom_index)
 
         environment = particle.get_local_environment(atom_index)
-        coordination_number = environment[0] # TODO not robust, only works if 'X' is second element, should specify
-        # index of non-vacancy element
+        coordination_number = environment[0]  # TODO not robust, only works if 'X' as 'empty site' is second entry
+        # TODO should specify index of non-vacancy element
 
-        atom_feature = element_offset + self.coordination_number_offsets[coordination_number]
+        atom_feature = element_offset + self.coordination_number_offsets[coordination_number] + environment[0]
 
         return atom_feature

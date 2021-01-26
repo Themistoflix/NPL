@@ -186,7 +186,11 @@ class BaseNanoparticle:
     def get_neighbor_list(self):
         return self.neighbor_list
 
-    def get_ase_atoms(self, indices=None):
+    def get_ase_atoms(self, indices=None, exclude_x=True):
+        if exclude_x and 'X' in self.get_stoichiometry():
+            vacancies = self.get_indices_by_symbol('X')
+            valid_indices = set(self.get_indices()).difference(vacancies)
+            return self.atoms.get_ase_atoms(list(valid_indices))
         return self.atoms.get_ase_atoms(indices)
 
     def get_stoichiometry(self):

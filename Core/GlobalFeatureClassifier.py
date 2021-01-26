@@ -36,7 +36,7 @@ class SimpleFeatureClassifier(GlobalFeatureClassifier):
         M = particle.get_stoichiometry()[self.symbol_a] * 0.1
         particle.set_feature_vector(self.feature_key, np.array([n_aa_bonds / n_atoms, n_bb_bonds / n_atoms, n_ab_bonds / n_atoms, M]))
 
-    # TODO move to BaseNanoparticle
+    # TODO move to BaseNanoparticle?
     def compute_respective_bond_counts(self, particle):
         n_aa_bonds = 0
         n_ab_bonds = 0
@@ -81,7 +81,8 @@ class TopologicalFeatureClassifier(SimpleFeatureClassifier):
         particle.set_feature_vector(self.feature_key, feature_vector)
 
 
-class TopologicalFeatureClassifier3(SimpleFeatureClassifier):
+# TODO move to separate modules & rename
+class CoordinationFeatureClassifier(SimpleFeatureClassifier):
     def __init__(self, symbols):
         SimpleFeatureClassifier.__init__(self, symbols)
         self.feature_key = 'TFC'

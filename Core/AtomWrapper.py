@@ -1,4 +1,5 @@
 import numpy as np
+from collections import defaultdict
 
 from ase import Atoms
 
@@ -68,7 +69,7 @@ class AtomWrapper:
         stoichiometry = self.atoms.symbols.indices()
         for symbol in stoichiometry:
             stoichiometry[symbol] = len(stoichiometry[symbol])
-        return stoichiometry
+        return defaultdict(lambda: 0, stoichiometry)
 
     def get_positions(self, indices=None):
         if indices is None:
