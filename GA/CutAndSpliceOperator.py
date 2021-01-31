@@ -3,31 +3,30 @@ from Core.CuttingPlaneUtilities import SphericalCuttingPlaneGenerator
 import numpy as np
 
 
-# TODO use atom positions to estimate max cutting radius
 class CutAndSpliceOperator:
-    def __init__(self, max_radius, recompute_neighbor_list=False):
+    def __init__(self, max_radius, recompute_neighbor_list=True):
         self.cutting_plane_generator = SphericalCuttingPlaneGenerator(max_radius, 0.0, 0.0)
         self.recompute_neighbor_list = recompute_neighbor_list
 
-    def cut_and_splice(self, particle1, particle2, fixed_stoichiometry=True):
-        self.cutting_plane_generator.set_center(particle1.get_ase_atoms().get_center_of_mass())
-        self.cutting_plane_generator.set_max_radius(np.max(particle1.get_ase_atoms().get_positions() -
-                                                           particle1.get_ase_atoms().get_center_of_mass()))
-
+    def cut_and_splice(self, p1, p2, fixed_stoichiometry=True):
+        self.cutting_plane_generator.set_center(p1.get_ase_atoms().get_center_of_mass())
+        self.cutting_plane_generator.set_max_radius(np.max(p1.get_ase_atoms().get_positions() -
+                                                           p1.get_ase_atoms().get_center_of_mass()))
+        # Ensure that we indeed cut
         while True:
             cutting_plane = self.cutting_plane_generator.generate_new_cutting_plane()
-            atom_indices_in_positive_subspace, _ = cutting_plane.split_atoms(particle1.get_ase_atoms())
-            _, atom_indices_in_negative_subspace = cutting_plane.split_atoms(particle2.get_ase_atoms())
+            atom_indices_in_positive_subspace, _ = cutting_plane.split_atom_indices(p1.get_ase_atoms())
+            _, atom_indices_in_negative_subspace = cutting_plane.split_atom_indices(p2.get_ase_atoms())
 
-            if len(atom_indices_in_negative_subspace) > 0 and len(atom_indices_in_positive_subspace) > 0:
+            if np.sum(atom_indices_in_negative_subspace) > 0 and np.sum(atom_indices_in_positive_subspace) > 0:
                 break
 
         new_particle = Nanoparticle()
-        new_particle.add_atoms(atom_indices_in_negative_subspace)
-        new_particle.add_atoms(atom_indices_in_positive_subspace)
+        new_particle.add_atoms(p1.get_ase_atoms().copy()[atom_indices_in_positive_subspace], False)
+        new_particle.add_atoms(p2.get_ase_atoms().copy()[atom_indices_in_negative_subspace], False)
 
         if fixed_stoichiometry is True:
-            target_stoichiometry = particle1.get_stoichiometry()
+            target_stoichiometry = p1.get_stoichiometry()
             new_particle.adjust_stoichiometry(target_stoichiometry)
 
         if self.recompute_neighbor_list:

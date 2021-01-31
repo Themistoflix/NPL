@@ -1,5 +1,6 @@
 import cProfile, pstats, io
 
+
 def profile(fnc):
     def inner(*args, **kwargs):
         pr = cProfile.Profile()

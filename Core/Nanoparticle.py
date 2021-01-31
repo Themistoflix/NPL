@@ -13,6 +13,8 @@ class Nanoparticle(BaseNanoparticle):
     def truncated_octahedron(self, height, cutoff, stoichiometry, lattice_constant=3.9, alloy=False):
         octa = Octahedron('Pt', height, cutoff, latticeconstant=lattice_constant, alloy=alloy)
         atoms = Atoms(octa.symbols, octa.positions)
+        com = atoms.get_center_of_mass()
+        atoms.positions -= com
 
         self.add_atoms(atoms, recompute_neighbor_list=False)
         self.random_ordering(stoichiometry)

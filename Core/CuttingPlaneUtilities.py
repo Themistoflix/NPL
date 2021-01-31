@@ -7,17 +7,11 @@ class CuttingPlane:
         self.anchor = anchor
         self.normal = normal
 
-    def split_atoms(self, atoms):
-        atoms_in_positive_subspace = Atoms()
-        atoms_in_negative_subspace = Atoms()
-
-        for atom in atoms.copy():
-            position = atom.position
-            if np.dot((position - self.anchor), self.normal) >= 0.0:
-                atoms_in_positive_subspace += atom
-            else:
-                atoms_in_negative_subspace += atom
-        return atoms_in_positive_subspace, atoms_in_negative_subspace
+    def split_atom_indices(self, atoms):
+        dot_product = np.dot((atoms.positions - self.anchor), self.normal)
+        indices_in_positive_subspace = dot_product > 0
+        indices_in_negative_subspace = dot_product < 0
+        return indices_in_positive_subspace, indices_in_negative_subspace
 
 
 class SphericalCuttingPlaneGenerator:
@@ -33,9 +27,12 @@ class SphericalCuttingPlaneGenerator:
         self.max_radius = max_radius
 
     def generate_new_cutting_plane(self):
-        normal = np.array([np.random.random() for _ in range(3)])
-        normal = normal / np.linalg.norm(normal)
-        anchor = normal * (self.min_radius + np.random.normal(0, 1) * (self.max_radius - self.min_radius))
+        normal = 1 - 2*np.random.random(3)
+        normal /= np.linalg.norm(normal)
+
+        anchor_dir = 1 - 2 * np.random.random(3)
+        anchor_dir /= np.linalg.norm(anchor_dir)
+        anchor = anchor_dir * (self.min_radius + np.random.random() * (self.max_radius - self.min_radius))
         anchor = anchor + self.center
 
         return CuttingPlane(anchor, normal)

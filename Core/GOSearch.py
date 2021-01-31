@@ -58,9 +58,7 @@ class MCSearch(GOSearch):
         self.local_feature_classifier = LFC.TopologicalEnvironmentClassifier(local_env_calculator, symbols)
 
         for p in training_set:
-            local_env_calculator.compute_local_environments(p)
             global_feature_classifier.compute_feature_vector(p)
-            print(p.get_feature_vector(global_feature_classifier.get_feature_key()))
 
         self.energy_calculator.fit(training_set, 'EMT')
 
@@ -118,13 +116,13 @@ class GASearch(GOSearch):
         self.local_env_calculator = local_env_calculator
 
         for p in training_set:
-            local_env_calculator.compute_local_environments(p)
             global_feature_classifier.compute_feature_vector(p)
 
         self.energy_calculator.fit(training_set, 'EMT')
 
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
+        print(lin_coef)
         topological_coefficients, self.total_energies = EC.compute_coefficients_for_linear_topological_model(
             lin_coef, symbols, n_atoms)
 
@@ -160,19 +158,18 @@ class GuidedSearch(GOSearch):
         self.energy_calculator = None
 
     def fit_energy_expression(self, training_set, symbols):
-        local_env_calculator = LEC.NeighborCountingEnvironmentCalculator(symbols)
         global_feature_classifier = GFC.TopologicalFeatureClassifier(symbols)
 
         self.energy_calculator = EC.BayesianRRCalculator(global_feature_classifier.get_feature_key())
 
         for p in training_set:
-            local_env_calculator.compute_local_environments(p)
             global_feature_classifier.compute_feature_vector(p)
 
         self.energy_calculator.fit(training_set, 'EMT')
 
         n_atoms = sum(list(training_set[0].get_stoichiometry().values()))
         lin_coef = self.energy_calculator.get_coefficients()
+        print(lin_coef)
         topological_coefficients, self.total_energies = EC.compute_coefficients_for_linear_topological_model(
             lin_coef, symbols, n_atoms)
 

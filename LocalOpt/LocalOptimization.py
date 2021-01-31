@@ -64,6 +64,7 @@ def local_optimization(start_particle, energy_calculator, environment_energies, 
 
             # roll back last exchange and make sure features and environments are up-to-date
             start_particle.swap_symbols([(index1, index2)])
+            start_particle.set_energy(energy_key, start_energy)
             for index in neighborhood:
                 local_env_calculator.compute_local_environment(start_particle, index)
                 local_feature_classifier.compute_atom_feature(start_particle, index)

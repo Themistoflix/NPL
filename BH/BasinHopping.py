@@ -10,7 +10,7 @@ def run_basin_hopping(start_particle, energy_calculator, environment_energies, n
         start_particle, energy_calculator, environment_energies, local_feature_classifier)
 
     start_energy = start_particle.get_energy(energy_key)
-    accepted_energies = [(start_energy, 0)]
+    lowest_energies = [(start_energy, 0)]
     best_particle = copy.deepcopy(start_particle)
     lowest_energy = start_energy
 
@@ -27,14 +27,16 @@ def run_basin_hopping(start_particle, energy_calculator, environment_energies, n
 
             energy_calculator.compute_energy(start_particle)
             new_energy = start_particle.get_energy(energy_key)
-            accepted_energies.append((new_energy, step))
 
             if new_energy < start_energy:
                 start_energy = new_energy
-                lowest_energy = min(lowest_energy, start_energy)
+                if new_energy < lowest_energy:
+                    lowest_energy = new_energy
+                    lowest_energies.append((lowest_energy, step))
+
             else:
                 if i % 20 == 0:
-                    print('Energy after local_opt: {}, lowest {}'.format(start_energy, lowest_energy))
+                    print('Energy after local_opt: {:.3f}, lowest {:.3f}'.format(start_energy, lowest_energy))
 
                 if lowest_energy == start_energy:
                     start_particle.swap_symbols([(index1, index2)])
@@ -55,8 +57,9 @@ def run_basin_hopping(start_particle, energy_calculator, environment_energies, n
 
             energy_calculator.compute_energy(start_particle)
             new_energy = start_particle.get_energy(energy_key)
-            accepted_energies.append((new_energy, step))
 
             start_energy = new_energy
+    print('Lowest energy: {:.3f}'.format(lowest_energy))
+    lowest_energies.append((lowest_energy, step))
 
-    return [best_particle, accepted_energies]
+    return [best_particle, lowest_energies]
